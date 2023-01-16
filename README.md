@@ -9,7 +9,7 @@ Generally in this framework, left side acts as server end, and right side as cli
 server is an example to use this application framwork.
 
 
-![lr](lr0.png "lr node")
+![lr](lr.png "lr node")
 
 
 # lr
