@@ -1,0 +1,45 @@
+#ifndef _EVENT_ID_H__
+#define _EVENT_ID_H__
+
+#define EVENT_HEAD_LEN 4
+
+enum {
+  EVENT_MAIN_TYPE_MASK                    = 0xFFF00000,
+  EVENT_SUB_TYPE_MASK                     = 0x000FFFFF,
+
+  EVENT_TYPE_NULL                         = 0x00000000,
+
+  EVENT_TYPE_SOCKET_TCP                   = 0x00100000,
+  EVENT_TYPE_WEBSOCKET                    = 0x00200000,
+  EVENT_TYPE_HTTPSOCKET                   = 0x00300000,
+  EVENT_TYPE_SOCKET_UDP                   = 0x00400000,
+  EVENT_TYPE_TIMER                        = 0x00500000,
+  EVENT_TYPE_CLIENT_SOCKET_TCP            = 0x00600000,
+  EVENT_TYPE_CLIENT_SOCKET_UDP            = 0x00700000,
+  EVENT_TYPE_SIGNAL                       = 0x00E00000,
+
+  EVENT_SUBTYPE_HEART_BEAT                = 0x00000000,
+  EVENT_SUBTYPE_ACCEPT                    = 0x00000001,
+  EVENT_SUBTYPE_READ                      = 0x00000002,
+  EVENT_SUBTYPE_WRITE                     = 0x00000003,
+  EVENT_SUBTYPE_CLOSE                     = 0x00000004,
+
+  EVENT_TYPE_SIGNAL_SIGINT                = 0x00E00001,
+  EVENT_TYPE_SIGNAL_SIGHUP                = 0x00E00002,
+  EVENT_TYPE_SIGNAL_SIGKILL               = 0x00E00003,
+  EVENT_TYPE_SIGNAL_SIGALRM               = 0x00E00004,
+
+
+  EVENT_TYPE_WEBSOCKET_PING               = 0x00200004,
+  EVENT_TYPE_WEBSOCKET_PONG               = 0x00200005,
+  EVENT_TYPE_WEBSOCKET_BINARY_DATA        = 0x00200006,
+  EVENT_TYPE_WEBSOCKET_TEXT_DATA          = 0x00200007,
+  EVENT_TYPE_WEBSOCKET_ADDITIONAL_DATA    = 0x00200008,
+
+  EVENT_TYPE_HTTPSOCKET_READ              = 0x00300001,
+  EVENT_TYPE_HTTPSOCKET_WRITE             = 0x00300002,
+  EVENT_TYPE_HTTPSOCKET_CLOSE             = 0x00300003,
+
+};
+
+#endif//_EVENT_ID_H__
