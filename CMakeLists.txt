@@ -21,7 +21,7 @@ set(lr_VERSION_MINOR 0)
 
 configure_file(
  ${PROJECT_SOURCE_DIR}/lr/lr.conf
- ${PROJECT_BINARY_DIR}/server/lr.conf
+ ${PROJECT_SOURCE_DIR}/server/lr.conf
 )
 
 MESSAGE(STATUS "Project: lr")
