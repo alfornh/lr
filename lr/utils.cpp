@@ -6,12 +6,6 @@
 #include <string.h>
 #include <math.h>
 
-
-//#include "openssl/sha.h"
-//#include "openssl/bio.h"
-//#include "openssl/evp.h"
-//#include "openssl/buffer.h"
-
 #include "zlog.h"
 
 
