@@ -1,7 +1,7 @@
 # lr
 
 
-![lr](lr.png "lr node")
+![lr](lr0.png "lr node")
 
 
 
