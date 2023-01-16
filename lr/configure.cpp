@@ -13,7 +13,7 @@
 #include "utils.h"
 #include "configure_item.h"
 
-static const std::string _configure_file_name = "frame.conf";
+static const std::string _configure_file_name = "lr.conf";
 
 Value::Value() {
   this->_v = "";
