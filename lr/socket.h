@@ -11,6 +11,9 @@
 #include "ipinfo.h"
 #include "base_type.h"
 
+
+#define CLOSE_FLAG true
+
 #define SEND_TO(es, data, args...)        \
   std::static_pointer_cast<Socket>(es)->esend(data, ##args)
 
@@ -44,12 +47,12 @@ public:
   int ssend();
 
 public:
-  int esend();
-  int esend(const char *buf, const int len);
-  int esend(const std::string &str);
-  int esend(const DataBuffer &db);
-  int esend(const std::shared_ptr<DataBuffer> &db);
-  int esend(const std::shared_ptr<BufferItem> &bi);
+  int esend(int cflag = false);
+  int esend(const char *buf, const int len, int cflag = false);
+  int esend(const std::string &str, int cflag = false);
+  int esend(const DataBuffer &db, int cflag = false);
+  int esend(const std::shared_ptr<DataBuffer> &db, int cflag = false);
+  int esend(const std::shared_ptr<BufferItem> &bi, int cflag = false);
 
 public:
   int add_r_data(const std::shared_ptr<BufferItem> &);

@@ -338,7 +338,6 @@ int Configure::get_string(const Key &key, std::string &val) {
 
   val = v->_string();
   return 0;
-
 }
 
 //result 0 not equal, 1 equal, -1 no key

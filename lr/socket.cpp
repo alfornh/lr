@@ -108,33 +108,63 @@ int Socket::ssend() {
   return len;
 }
 
-int Socket::esend() {
-  return _line->notify_w_event(_id, _fd);
+int Socket::esend(int cflag) {
+  int ret = _line->notify_w_event(_id, _fd);
+  if (cflag) {
+    vclose();
+  } 
+  return ret;
 }
 
-int Socket::esend(const char *buf, const int len) {
+int Socket::esend(const char *buf, const int len, int cflag) {
+  int ret;
   add_w_data(buf, len);
-  return _line->notify_w_event(_id, _fd);
+  ret = _line->notify_w_event(_id, _fd);
+  if (cflag) {
+    vclose();
+  }
+  return ret;
 }
 
-int Socket::esend(const std::string &str) {
+int Socket::esend(const std::string &str, int cflag) {
+  int ret;
   add_w_data(str);
-  return _line->notify_w_event(_id, _fd);
+  
+  ret = _line->notify_w_event(_id, _fd);
+  if (cflag) {
+    vclose();
+  }
+  return ret;
 }
 
-int Socket::esend(const DataBuffer &db) {
+int Socket::esend(const DataBuffer &db, int cflag) {
+  int ret;
   add_w_data(db);
-  return _line->notify_w_event(_id, _fd);
+  ret = _line->notify_w_event(_id, _fd);
+  if (cflag) {
+    vclose();
+  }
+  return ret;
 }
 
-int Socket::esend(const std::shared_ptr<DataBuffer> &db) {
+int Socket::esend(const std::shared_ptr<DataBuffer> &db, int cflag) {
+  int ret;
   add_w_data(db);
-  return _line->notify_w_event(_id, _fd);
+  ret = _line->notify_w_event(_id, _fd);
+  if (cflag) {
+    vclose();
+  }
+  return ret;
 }
 
-int Socket::esend(const std::shared_ptr<BufferItem> &bi) {
+int Socket::esend(const std::shared_ptr<BufferItem> &bi, int cflag) {
+  int ret;
   add_w_data(bi);
-  return _line->notify_w_event(_id, _fd);
+  ret = _line->notify_w_event(_id, _fd);
+  if (cflag) {
+    vclose();
+  }
+  return ret;
 }
 
 int Socket::add_w_data(const char *buf, const int len) {

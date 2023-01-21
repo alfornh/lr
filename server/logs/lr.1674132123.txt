@@ -1,0 +1,49 @@
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 45 init
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init server_info : 1, gate, gate name, 10000000, the flowing is note for this server...
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init version : 1 0
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init log_level : info
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init timer_line : 0/5
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init left_end : 1
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init left_tcp : 0/3, tcp/127.0.0.1/9001/3/3, tcp/127.0.0.1/9002/3/3, tcp/127.0.0.1/9003/3/3
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init left_websocket : 1/3, websocket/127.0.0.1/7001/3/3, websocket/127.0.0.1/7002/1/1, websocket/127.0.0.1/7003/1/1
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init left_http : 0/3, http/127.0.0.1/8080/3/3, http/127.0.0.1/8081/3/3, http/127.0.0.1/8082/1/1
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init left_udp : 0/3, udp/127.0.0.1/5003/1/1, udp/127.0.0.1/5004/1/1
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init right_end : 0
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init right_tcp : 0/10, tcp/127.0.0.1/7001/3/3, tcp/127.0.0.1/7002/3/3, tcp/127.0.0.1/7003/3/3
+[1674132123 debug 140523011594048] /root/temp/lr/lr/configure.cpp 122 init right_udp : 0/3, udp/127.0.0.1/5001/1/1, udp/127.0.0.1/5002/1/1
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 149 parse_server_info
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 180 parse_timer_line
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 201 parse_lr_tu 1025
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 201 parse_lr_tu 1026
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 201 parse_lr_tu 1027
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 201 parse_lr_tu 1028
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 201 parse_lr_tu 769
+[1674132123 info  140523011594048] /root/temp/lr/lr/configure.cpp 201 parse_lr_tu 770
+[1674132123 warn  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 41 init tcp not enable
+[1674132123 info  140523011594048] /root/temp/lr/lr/event_pool.cpp 18 reserve_event_queue
+[1674132123 info  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 57 init websocket init ok 127.0.0.1 7001
+[1674132123 info  140523011594048] /root/temp/lr/lr/event_pool.cpp 18 reserve_event_queue
+[1674132123 info  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 57 init websocket init ok 127.0.0.1 7002
+[1674132123 info  140523011594048] /root/temp/lr/lr/event_pool.cpp 18 reserve_event_queue
+[1674132123 info  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 57 init websocket init ok 127.0.0.1 7003
+[1674132123 warn  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 83 init http not enable
+[1674132123 warn  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 104 init udp not enable
+[1674132123 warn  140523011594048] /root/temp/lr/lr/left_event_listener.cpp 114 init timer not enable
+[1674132123 info  140523011594048] /root/temp/lr/lr/event_pool.cpp 18 reserve_event_queue
+[1674132123 info  140522136008448] /root/temp/lr/lr/left_event_dispatcher.cpp 130 dispatch_websocket 1
+[1674132123 info  140523011594048] /root/temp/lr/lr/left_object.cpp 119 dispatch_signal
+[1674132123 info  140522488305408] /root/temp/lr/lr/left_event_dispatcher.cpp 130 dispatch_websocket 2
+[1674132123 info  140522496698112] /root/temp/lr/lr/left_event_dispatcher.cpp 130 dispatch_websocket 3
+[1674132125 warn  140523011594048] /root/temp/lr/lr/signals.cpp 115 signal_handler SIGINT  2  caught
+[1674132125 info  140522505090816] /root/temp/lr/server/signal_handler.cpp 9 handle get signal event: 14680065
+[1674132125 info  140522505090816] /root/temp/lr/server/signal_handler.cpp 20 handle EVENT_TYPE_SIGNAL_SIGINT
+[1674132125 info  140522505090816] /root/temp/lr/lr/left_object.cpp 144 stop
+[1674132125 warn  140522505090816] /root/temp/lr/lr/signals.cpp 152 stop
+[1674132125 warn  140522505090816] /root/temp/lr/lr/left_event_listener.cpp 179 stop
+[1674132125 warn  140522505090816] /root/temp/lr/lr/left_event_dispatcher.cpp 237 stop
+[1674132125 warn  140522127615744] /root/temp/lr/lr/thread_manager.cpp 66 _thread_proc _stop_flag 1
+[1674132125 warn  140522505090816] /root/temp/lr/lr/event_pool.cpp 12 stop
+[1674132125 warn  140522119223040] /root/temp/lr/lr/thread_manager.cpp 66 _thread_proc _stop_flag 1
+[1674132125 info  140523011594048] /root/temp/lr/lr/left_object.cpp 138 wait server stopped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+[1674132125 warn  140522110830336] /root/temp/lr/lr/thread_manager.cpp 66 _thread_proc _stop_flag 1
+[1674132125 warn  140523011594048] /root/temp/lr/lr/signals.cpp 144 clean_up server stopped
