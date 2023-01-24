@@ -41,7 +41,7 @@ std::shared_ptr<Socket> TcpSocket::vaccept() {
   //sock->_w_event_pool_id = _w_event_pool_id;
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_a_fd)
-  sock->_fd = accept(_fd, (struct sockaddr *)&addr, &socklen);
+  sock->_fd = ::accept(_fd, (struct sockaddr *)&addr, &socklen);
   if (sock->_fd < 0) {
     ZLOG_WARN(__FILE__, __LINE__, __func__, "accept errno", errno);
     return Socket::ptr();
@@ -65,7 +65,7 @@ int TcpSocket::vbind() {
   addr.sin_family = AF_INET;
   addr.sin_port  = htons(_ipi._port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  int ret = bind(_fd, (struct sockaddr *)&addr, sizeof(addr));
+  int ret = ::bind(_fd, (struct sockaddr *)&addr, sizeof(addr));
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "bind with", _fd, _ipi._ip, _ipi._port);
     return -1;
@@ -83,7 +83,7 @@ int TcpSocket::vconnect() {
   server.sin_port   = htons(_ipi._port);
   server.sin_addr.s_addr = inet_addr(_ipi._ip.c_str());
 
-  int ret = connect(_fd, (struct sockaddr *) &server, sizeof(server));
+  int ret = ::connect(_fd, (struct sockaddr *) &server, sizeof(server));
   if (ret < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, _fd, _ipi._ip, _ipi._port, errno);
     return -1;
@@ -97,7 +97,7 @@ int TcpSocket::vconnect() {
 }
 
 int TcpSocket::vlisten() {
-  int ret = listen(_fd, 65535);
+  int ret = ::listen(_fd, 65535);
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "listen with fd", _fd);
     return ret;
@@ -113,7 +113,7 @@ int TcpSocket::vrecv() {
   //event->_db->add_new_buffer_item(bi);
   LOCK_GUARD_MUTEX_BEGIN(_mutex_r_fd)
   while ( _socket_status == SOCKET_STATUS_ACTIVE || _socket_status == SOCKET_STATUS_WEBSOCKET_ACTIVE) {
-    ret = recv(_fd, bi->_buffer + bi->_len, bi->available(), 0);
+    ret = ::recv(_fd, bi->_buffer + bi->_len, bi->available(), 0);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "errno EINTR");
@@ -166,7 +166,7 @@ int TcpSocket::vsend(const char *buf, const int blen) {
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_w_fd)
   while (sent < blen && (_socket_status == SOCKET_STATUS_ACTIVE || _socket_status == SOCKET_STATUS_WEBSOCKET_ACTIVE)) {
-    ret = send(_fd, buf + sent, blen - sent, MSG_NOSIGNAL);
+    ret = ::send(_fd, buf + sent, blen - sent, MSG_NOSIGNAL);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "errno", errno);

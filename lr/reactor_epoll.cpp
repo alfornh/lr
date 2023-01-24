@@ -1,4 +1,4 @@
-#include "reactor.h"
+#include "reactor_epoll.h"
 
 #include <stdlib.h>
 #include <sys/epoll.h>
@@ -12,8 +12,12 @@
 #include "utils.h"
 #include "listener.h"
 
+
 EpollReactor::~EpollReactor() {
-  close(_epollfd);
+  if (_epollfd > 0) {
+    ::close(_epollfd);
+  }
+  _epollfd = -1;
 }
 
 int EpollReactor::_init(IPInfo &ipi) {
@@ -36,40 +40,16 @@ int EpollReactor::_init(IPInfo &ipi) {
 
   _stop_flag = false;
   _epollfd = epoll_create1(EPOLL_CLOEXEC);
+  if (_epollfd < 0) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "epoll_create1", errno);
+    return -1;
+  }
 
   return 0;
-
 }
 
 void EpollReactor::_stop() {
   _stop_flag = true;
-  Reactor::_stop();
-
-  //_epoll_event_buffer->stop();
-
-  static int tfd = -1;
-  if ( tfd < 0) {
-    tfd = timerfd_create(CLOCK_REALTIME, 0);
-  }
-
-  if (tfd < 0) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "timerfd_create error");
-    return ;
-  }
-
-  struct itimerspec iti;
-  iti.it_value.tv_sec = 1;
-  iti.it_value.tv_nsec= 0;
-  iti.it_interval.tv_sec = 0;
-  iti.it_interval.tv_nsec = 0;
-  int ret = timerfd_settime(tfd, TFD_TIMER_ABSTIME, &iti, NULL);
-  if (ret < 0) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "timerfd_settime error");
-    return ;
-  }
-  
-
-  _add(0, tfd);
 
   _cv_o_sockets.notify_all();
 }
@@ -106,13 +86,19 @@ void EpollReactor::listen_i_proc() {
       _epollfd,
       (struct epoll_event *)(bi->_buffer),
       EPOLL_WAIT_EVENTS, //BufferItem::buffer_item_capacity/sizeof(struct epoll_event),
-      -1
+      10 * 1000
     );
     LOCK_GUARD_MUTEX_END
+    if (bi->_len == 0) {
+      ZLOG_DEBUG(__FILE__, __LINE__, __func__, "epoll wait timeout", errno);
+      continue;
+    }
+
     if (_stop_flag) {
       return ;
     }
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, "aft epoll wait", bi->_len, errno);
+
 
     if (bi->_len < 0) {
       if (errno != EINTR) {
@@ -223,4 +209,3 @@ int EpollReactor::notify_w_event(SOCKETID sid, int fd) {
 
   return 1;
 }
-

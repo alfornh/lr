@@ -1,7 +1,6 @@
 #include "left_tcp_end.h"
 
 #include <string>
-#include <sys/epoll.h>
 
 #include "configure.h"
 #include "configure_item.h"
@@ -10,6 +9,7 @@
 #include "event_pool.h"
 #include "ipinfo.h"
 #include "reactor.h"
+#include "reactor_epoll.h"
 #include "tcp_socket.h"
 #include "thread_manager.h"
 #include "utils.h"

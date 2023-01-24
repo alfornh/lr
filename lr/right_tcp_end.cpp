@@ -5,6 +5,7 @@
 #include "event.h"
 #include "event_pool.h"
 #include "reactor.h"
+#include "reactor_epoll.h"
 #include "tcp_socket.h"
 #include "udp_socket.h"
 #include "utils.h"

@@ -12,7 +12,6 @@
 #include "socket.h"
 
 class Socket;
-class EpollReactor;
 
 class RightTcpEnd: public Listener, public std::enable_shared_from_this<RightTcpEnd> {
 public:

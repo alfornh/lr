@@ -7,7 +7,7 @@
 #include "event_type.h"
 #include "ipinfo.h"
 
-class EpollReactor;
+class Reactor;
 class Socket;
 class Event;
 class Listener {
@@ -32,7 +32,7 @@ public:
   IPInfo __ipi;
   std::shared_ptr<Socket> _main_socket;
   bool _stop_flag;
-  std::shared_ptr<EpollReactor> _reactor;
+  std::shared_ptr<Reactor> _reactor;
 
   int _r_event_pool_id;
   //int _w_event_pool_id;

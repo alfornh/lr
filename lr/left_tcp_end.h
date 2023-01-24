@@ -8,7 +8,6 @@
 #include "ipinfo.h"
 #include "listener.h"
 #include "base_type.h"
-#include "reactor.h"
 
 class Socket;
 class TcpSocket;

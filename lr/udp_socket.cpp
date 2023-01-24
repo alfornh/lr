@@ -19,7 +19,7 @@ UdpSocket::UdpSocket(EVENTID mtype) {
 }
 
 int UdpSocket::vinit(IPInfo &ipi) {
-  _fd = socket(AF_INET, SOCK_DGRAM, 0);
+  _fd = ::socket(AF_INET, SOCK_DGRAM, 0);
   if (_fd < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket");
     return -1;
@@ -42,7 +42,7 @@ int UdpSocket::vbind() {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
   }
 
-  int ret = bind(this->_fd, (struct sockaddr *)&addr, sizeof(addr));
+  int ret = ::bind(this->_fd, (struct sockaddr *)&addr, sizeof(addr));
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "bind with", _fd, _ipi._ip, _ipi._port);
     return -1;
@@ -71,7 +71,7 @@ int UdpSocket::vsend(const char *buf, const int blen) {
   LOCK_GUARD_MUTEX_BEGIN(_mutex_w_fd)
 
   do {
-    ret = sendto(_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
+    ret = ::sendto(_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "EINTR");
@@ -108,7 +108,7 @@ int UdpSocket::vrecv() {
   BufferItem::ptr bi = MAKE_SHARED(BufferItem);
   LOCK_GUARD_MUTEX_BEGIN(_mutex_r_fd)
   do {
-    ret = recvfrom(_fd, bi->_buffer + bi->_len, bi->available(), 0, (struct sockaddr *)&addr, &socklen);
+    ret = ::recvfrom(_fd, bi->_buffer + bi->_len, bi->available(), 0, (struct sockaddr *)&addr, &socklen);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "recvfrom EINTR");
@@ -152,7 +152,7 @@ std::shared_ptr<UdpSocket> UdpSocket::lrecv() {
   BufferItem::ptr bi = MAKE_SHARED(BufferItem);
   LOCK_GUARD_MUTEX_BEGIN(_mutex_r_fd)
   do {
-    ret = recvfrom(_fd, bi->_buffer + bi->_len, bi->available(), 0, (struct sockaddr *)&addr, &socklen);
+    ret = ::recvfrom(_fd, bi->_buffer + bi->_len, bi->available(), 0, (struct sockaddr *)&addr, &socklen);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "recvfrom EINTR");
@@ -224,7 +224,7 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_w_fd)
   do {
-    ret = sendto(_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
+    ret = ::sendto(_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "EINTR");

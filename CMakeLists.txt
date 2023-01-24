@@ -8,12 +8,13 @@ set(CMAKE_CXX_STANDARD 11)
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+
 if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+  message(STATUS "Compiler ${CMAKE_CXX_COMPILER} don't support c++11.")
 endif()
 
 set(lr_VERSION_MAJOR 1)
@@ -41,7 +42,7 @@ set(FRAME_SRC
   ${PROJECT_SOURCE_DIR}/lr/signals.cpp
   ${PROJECT_SOURCE_DIR}/lr/event_queue.cpp
   ${PROJECT_SOURCE_DIR}/lr/configure.cpp
-  ${PROJECT_SOURCE_DIR}/lr/reactor.cpp
+  ${PROJECT_SOURCE_DIR}/lr/reactor_epoll.cpp
   ${PROJECT_SOURCE_DIR}/lr/file.cpp
   ${PROJECT_SOURCE_DIR}/lr/socket.cpp
   ${PROJECT_SOURCE_DIR}/lr/tcp_socket.cpp
