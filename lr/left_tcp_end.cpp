@@ -3,13 +3,12 @@
 #include <string>
 
 #include "configure.h"
-#include "configure_item.h"
 #include "data_buffer.h"
 #include "event.h"
 #include "event_pool.h"
 #include "ipinfo.h"
-#include "reactor.h"
 #include "reactor_epoll.h"
+#include "reactor_select.h"
 #include "tcp_socket.h"
 #include "thread_manager.h"
 #include "utils.h"
@@ -62,11 +61,12 @@ int LeftTcpEnd::init() {
     return -1;
   }
 
-  //switch (m) {
-  //case REACTOR_EPOLL:
-  _reactor = MAKE_SHARED(EpollReactor);
-  //break;
-  //}
+  Value::ptr v = PCONFIGURE->get_value("left_reactor");
+  if (v && v->_v == "epoll") {
+    _reactor = MAKE_SHARED(EpollReactor);
+  } else {
+    _reactor = MAKE_SHARED(SelectReactor);
+  }
 
   _reactor->_line = shared_from_this();
 

@@ -2,12 +2,13 @@
 
 #include <string>
 
-#include "configure_item.h"
+#include "configure.h"
 #include "data_buffer.h"
 #include "event.h"
 #include "event_pool.h"
 #include "reactor.h"
 #include "reactor_epoll.h"
+#include "reactor_select.h"
 #include "tcp_socket.h"
 #include "thread_manager.h"
 #include "timer.h"
@@ -30,7 +31,12 @@ int RightUdpEnd::init() {
 
   _r_event_pool_id = EventPool::reserve_event_queue();
 
-  _reactor = MAKE_SHARED(EpollReactor);
+  Value::ptr v = PCONFIGURE->get_value("right_reactor");
+  if (v && v->_v == "epoll") {
+    _reactor = MAKE_SHARED(EpollReactor);
+  } else {
+    _reactor = MAKE_SHARED(SelectReactor);
+  }
 
   _reactor->_line = shared_from_this();
 

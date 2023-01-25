@@ -9,6 +9,8 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 
+add_definitions("-Wall -g")
+
 if(COMPILER_SUPPORTS_CXX11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
@@ -43,6 +45,7 @@ set(FRAME_SRC
   ${PROJECT_SOURCE_DIR}/lr/event_queue.cpp
   ${PROJECT_SOURCE_DIR}/lr/configure.cpp
   ${PROJECT_SOURCE_DIR}/lr/reactor_epoll.cpp
+  ${PROJECT_SOURCE_DIR}/lr/reactor_select.cpp
   ${PROJECT_SOURCE_DIR}/lr/file.cpp
   ${PROJECT_SOURCE_DIR}/lr/socket.cpp
   ${PROJECT_SOURCE_DIR}/lr/tcp_socket.cpp

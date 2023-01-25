@@ -135,7 +135,7 @@ void EpollReactor::listen_i_proc() {
   }
 }
 
-void EpollReactor::EpollReactor::listen_o_proc() {
+void EpollReactor::listen_o_proc() {
   SOCKETID id;
   while (!_stop_flag) {
     {

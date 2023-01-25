@@ -2,10 +2,12 @@
 
 #include <string>
 
+#include "configure.h"
 #include "event.h"
 #include "event_pool.h"
 #include "reactor.h"
 #include "reactor_epoll.h"
+#include "reactor_select.h"
 #include "tcp_socket.h"
 #include "udp_socket.h"
 #include "utils.h"
@@ -36,7 +38,12 @@ int RightTcpEnd::init() {
   _main_socket->_line = shared_from_this();
 
 
-  _reactor = MAKE_SHARED(EpollReactor);
+  Value::ptr v = PCONFIGURE->get_value("right_reactor");
+  if (v && v->_v == "epoll") {
+    _reactor = MAKE_SHARED(EpollReactor);
+  } else {
+    _reactor = MAKE_SHARED(SelectReactor);
+  }
 
   _reactor->_line = shared_from_this();
 

@@ -110,7 +110,6 @@ int TcpSocket::vrecv() {
   int ret;
   int lrecv = 0;
   BufferItem::ptr bi = std::make_shared<BufferItem>();
-  //event->_db->add_new_buffer_item(bi);
   LOCK_GUARD_MUTEX_BEGIN(_mutex_r_fd)
   while ( _socket_status == SOCKET_STATUS_ACTIVE || _socket_status == SOCKET_STATUS_WEBSOCKET_ACTIVE) {
     ret = ::recv(_fd, bi->_buffer + bi->_len, bi->available(), 0);

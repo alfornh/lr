@@ -1,11 +1,12 @@
 #include "left_udp_end.h"
 
-#include "configure_item.h"
+#include "configure.h"
 #include "event.h"
 #include "event_pool.h"
 #include "ipinfo.h"
 #include "reactor.h"
 #include "reactor_epoll.h"
+#include "reactor_select.h"
 #include "socket.h"
 #include "thread_manager.h"
 #include "udp_socket.h"
@@ -44,11 +45,12 @@ int LeftUdpEnd::init() {
     return -1;
   }
 
-  //switch (m) {
-  //case REACTOR_EPOLL:
-  _reactor = MAKE_SHARED(EpollReactor);
-  //break;
-  //}
+  Value::ptr v = PCONFIGURE->get_value("left_reactor");
+  if (v && v->_v == "epoll") {
+    _reactor = MAKE_SHARED(EpollReactor);
+  } else {
+    _reactor = MAKE_SHARED(SelectReactor);
+  }
 
   _reactor->_line = shared_from_this();
 
