@@ -101,7 +101,6 @@ int Socket::ssend() {
   }
 
   _w_db->drop(len);
-  //_w_db->clear();
 
   LOCK_GUARD_MUTEX_END
 

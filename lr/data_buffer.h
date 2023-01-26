@@ -19,6 +19,7 @@ public:
   BufferItem() {
     memset(_buffer, 0x0, sizeof(_buffer));
     _len = 0;
+    _spos = 0;
   }
 
   int size() {
@@ -26,26 +27,29 @@ public:
   }
 
   bool empty() {
-    return (_len == 0);
+    return (_len <= 0);
   }
 
   int available() {
-    return BufferItem::buffer_item_capacity - _len;
+    return BufferItem::buffer_item_capacity - (_len + _spos);
   }
 
   void clear() {
     _len = 0;
+    _spos = 0;
+    memset(_buffer, 0x0, sizeof(_buffer));
   }
 
   int set(const char *buf, const int len) {
+    int l = len;
     if (len > buffer_item_capacity) {
-      memmove((void *)_buffer, (const void *)buf, buffer_item_capacity);
-      _len = buffer_item_capacity;
-      return buffer_item_capacity;
+      l = buffer_item_capacity;
     }
-    memmove((void *)_buffer, (const void *)buf, len);
+
+    memmove((void *)_buffer, (const void *)buf, l);
+    _spos = 0;
     _len = len;
-    return len;
+    return l;
   }
 
   int set(const std::shared_ptr<BufferItem> bi) {
@@ -57,24 +61,27 @@ public:
       return _len;
     }
 
-    memmove((void *)_buffer, (const void *)(bi._buffer), bi._len);
+    memmove((void *)_buffer, (const void *)(bi._buffer), buffer_item_capacity);
+
+    _spos = bi._spos;
     _len = bi._len;
+
     return _len;
   }
 
   int add(const char *buf, const int len) {
-    int ava = buffer_item_capacity - _len;
+    int ava = buffer_item_capacity - _len - _spos;
     if (ava < 1) {
       return 0;
     }
 
     if (len > ava) {
-      memmove((void *)&(_buffer[_len]), (const void *)buf, ava);
+      memmove((void *)&(_buffer[_spos + _len]), (const void *)buf, ava);
       _len += ava;
       return ava;
     }
 
-    memmove((void *)&(_buffer[_len]), (const void *)buf, len);
+    memmove((void *)&(_buffer[_spos + _len]), (const void *)buf, len);
     _len += len;
     return len;
   }
@@ -84,67 +91,58 @@ public:
       return _len;
     }
 
-    memmove((void *)(bi._buffer), (const void *)_buffer, _len);
+    memmove((void *)(bi._buffer), (const void *)&(_buffer[_spos]), _len);
     bi._len = _len;
     _len = 0;
     return bi._len;
   }
 
   int move(char *buf, const int len) {
-    int ret;
-    if (len >= _len) {
-      memmove((void *)buf, (const void *)_buffer, _len);
-      ret = _len;
-      _len = 0;
-      return ret;
-    }
+    int l = get(buf, len);
 
-    int i = 0;
-    for (; i < len; ++i) {
-      buf[i] = _buffer[i];
-    }
+    _len -= l;
+    _spos += l;
 
-    for (; i < _len; ++i) {
-      _buffer[i - len] = _buffer[i];
-    }
-
-    _len -= len;
-
-    return len;
+    return l;
   }
 
   int get(char *buf, const int len) {
-    if (len >= _len) {
-      memmove((void *)buf, (const void *)_buffer, _len);
-      return _len;
+    if (_len < 1) {
+      return 0;
     }
 
-    int i = 0;
-    for (; i < len; ++i) {
-      buf[i] = _buffer[i];
+    int l = _len;
+    if (len < _len) {
+      l = len;
     }
 
-    return len;
+    memmove((void *)buf, (const void *)&(_buffer[_spos]), l);
+
+    return l;
   }
 
-
   int drop(const int len) {
-    int ret = 0;
-    if (len >= _len) {
+    int ret;
+    if (_len < 1) {
+      return 0;
+    }
+
+    if (len > _len) {
       ret = _len;
-      memset(_buffer, 0x0, sizeof(_buffer));
       _len = 0;
+      _spos = BufferItem::buffer_item_capacity;
       return ret;
     }
 
     _len -= len;
-    memmove((void *)_buffer, (const void *)(_buffer + len), _len);
-    memset((_buffer + _len), 0x0, buffer_item_capacity - _len);
+    _spos += len;
+
     return len;
   }
 
   char _buffer[BufferItem::buffer_item_capacity];
   int _len;
+  int _spos;
 };
 
 class DataBuffer {

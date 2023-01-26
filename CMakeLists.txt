@@ -74,7 +74,6 @@ set(SERVER_NAME server)
 
 
 add_library(${FRAME_NAME} STATIC ${FRAME_SRC})
- 
 
 
 target_link_libraries(${FRAME_NAME} pthread dl)

@@ -66,7 +66,16 @@ int Configure::init() {
   char *head = NULL;
 
   _file->cursor_head();
-  while (_file->readline(bi->_buffer, BufferItem::buffer_item_capacity) > 0) {
+  while ( true ) {
+    ret = _file->readline(bi->_buffer, BufferItem::buffer_item_capacity);
+    if (ret <= 0) {
+      break;
+    }
+    if (ret >= BufferItem::buffer_item_capacity) {
+      ZLOG_ERROR(__FILE__, __LINE__, __func__, "configure line too long");
+      return -1;
+    }
+
     head = bi->_buffer;
 
     bool nonspace = false;

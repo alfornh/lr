@@ -1,13 +1,12 @@
 #include "utils.h"
 
+#include <math.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <netinet/in.h>
 #include <string.h>
-#include <math.h>
 
 #include "zlog.h"
-
 
 inline bool is_host_big_endian() {
   union {
@@ -73,17 +72,25 @@ uint64_t hton64(uint64_t u64) {
   return (u64_ << 32) | htonl(u64_h);
 }
 
+inline bool isspace(const char c) {
+  return (c == ' ') || (c == '\t') || (c == '\n');
+}
+
 const char *extract_section_from_str(const char *str, char *word, int wlen, const char end) {
   int len = 0;
+  if (!str || !word || (wlen < 1)) {
+    return NULL;
+  }
+
   memset(word, 0x0, wlen);
-  while (*str && *str == ' ') ++str;
+  while (*str && isspace(*str)) ++str;
 
   while (*str && *str != end && (len < wlen - 1)) {
     word[len++] = *str++;
   }
   word[len] = '\0';
 
-  while (len >= 0 && word[len] == ' ') {
+  while (len > 0 && isspace(word[len])) {
     word[len--] = '\0';
   }
 

@@ -15,6 +15,8 @@
 #define STATIC_CAST(c,  sp)  std::static_pointer_cast< c >( sp )
 
 
+//#define ISSPACE(c) ((((c) == ' ') || ((c) == '\t') || ((c) == '\n')))
+
 uint16_t ntoh16(uint16_t u16);
 uint32_t ntoh32(uint32_t u32);
 uint64_t ntoh64(uint64_t u64);

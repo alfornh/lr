@@ -3,22 +3,16 @@
 #include <memory.h>
 
 #include "zlog.h"
+#include "utils.h"
 
 DataBuffer::DataBuffer() {
-  //_data = std::vector<char>();
-  //_data.resize(data_buffer_capacity_step, '\0');
-  //_data.shrink_to_fit();
-  _len    = 0;
   _data.clear();
+  _len    = 0;
 }
 
 void DataBuffer::clear() {
-  //_data.resize(data_buffer_capacity_step, '\0');
-  //_data.shrink_to_fit();
-  //_data = std::vector<char>();
-  //_len   = 0;
   _data.clear();
-  _len = 0;
+  _len    = 0;
 }
 
 int DataBuffer::size() {
@@ -27,11 +21,13 @@ int DataBuffer::size() {
 
 int DataBuffer::drop(const int len) {
   int dlen = 0;
+  BufferItem::ptr bi;
   while (dlen < len) {
-    BufferItem::ptr bi = _data.front();
-    if ( !bi ) {
+    if (_data.size() < 1) {
       break;
     }
+
+    bi = _data.front();
 
     dlen += bi->drop(len - dlen);
     if (bi->empty()) {
@@ -44,7 +40,6 @@ int DataBuffer::drop(const int len) {
 }
 
 int DataBuffer::add(const std::shared_ptr<BufferItem> bi) {
-  //_data.push_back(bi);
   return add(bi->_buffer, bi->_len);
 }
 
@@ -70,7 +65,7 @@ int DataBuffer::add(const std::shared_ptr<DataBuffer> db) {
 }
 
 int DataBuffer::add(const char *data, const int dlen) {
-  BufferItem::ptr bi = BufferItem::ptr();
+  BufferItem::ptr bi;
 
   if (_data.size() > 0) {
     bi = _data.back();
@@ -79,14 +74,10 @@ int DataBuffer::add(const char *data, const int dlen) {
   int alen = 0;
   while (dlen - alen > 0) {
     if (!bi || bi->available() < 1) {
-      bi = std::make_shared<BufferItem>();
+      bi = MAKE_SHARED(BufferItem);
       _data.push_back(bi);
     }
 
-    //int cana = bi->available();
-    //if (cana > dlen -alen) {
-    //  cana = dlen - alen;
-    //}
     alen += bi->add(data + alen, dlen - alen);
   }
 
@@ -114,34 +105,36 @@ int DataBuffer::move(DataBuffer &db) {
 }
 
 int DataBuffer::move(std::shared_ptr<DataBuffer> db) {
-  get(db);
-  _data.clear();
-  _len = 0;
-  return db->_len;
+  return move(*db);
 }
 
 int DataBuffer::move(char *buf, const int len) {
-  if (_len < 1) {
+  int used = 0;
+  BufferItem::ptr bi;
+
+  if (_len < 1 || !buf) {
     return 0;
   }
 
-  int used = 0;
   memset(buf, 0x0, len);
 
-  do {
-    BufferItem::ptr bi = _data.front();
-
-    if (bi->_len <= len - used) {
-      memcpy(buf + used, bi->_buffer, bi->_len);
-      used += bi->_len;
-      _data.pop_front();
-    } else {
-      bi->move(buf + used, len-used);
-      used = len;
+  while ( true ) {
+    if (_data.size() < 1) {
       break;
     }
 
-  } while (!_data.empty() && used < len);
+    if (used >= len || used >= _len) {
+      break;
+    }
+
+    bi = _data.front();
+
+    used += bi->move(buf + used, len - used);
+
+    if (bi->empty()) {
+      _data.pop_front();
+    }
+  }
 
   _len -= used;
 
@@ -149,25 +142,21 @@ int DataBuffer::move(char *buf, const int len) {
 }
 
 int DataBuffer::get(char *buf, int blen) {
-  if (blen < _len) {
-    return -1;
+  int used = 0;
+  BufferItem::ptr bi;
+  if (_len < 1 || !buf) {
+    return 0;
   }
 
-  int spos = 0;
-  std::list<std::shared_ptr<BufferItem>>::iterator beg = _data.begin();
-  while (beg != _data.end()) {
-    spos += (*beg)->get(buf + spos, blen - spos);
-    if (spos >= blen) {
-      return blen;
-    }
-    if (spos >= _len) {
-      return _len;
+  for (const BufferItem::ptr &bi:_data) {
+    if (used >= blen || used >= _len) {
+      break;
     }
 
-    ++beg;
+    used += bi->get(buf + used, blen - used);
   }
 
-  return _len;
+  return used;
 }
 
 int DataBuffer::get(std::vector<char> &buf) {
@@ -181,22 +170,13 @@ int DataBuffer::get(std::vector<char> &buf) {
 }
 
 int DataBuffer::get(DataBuffer &buf) {
-  if (&(buf._len) == &_len) {
+  if ((_len < 1) || (&(buf._len) == &_len)) {
     return _len;
   }
 
-  if (_len < 1) {
-    return 0;
+  for (const BufferItem::ptr &bi: _data) {
+    buf.add(bi);
   }
-
-  std::list<std::shared_ptr<BufferItem>>::iterator it = _data.begin();
-  for (; it != _data.end(); ++it) {
-    BufferItem::ptr bi = std::make_shared<BufferItem>();
-    bi->set(*it);
-    buf._data.emplace_back(bi);
-  }
-
-  buf._len = _len;
 
   return _len;
 }
@@ -226,17 +206,12 @@ int DataBuffer::set(const DataBuffer &db) {
   _data.clear();
 
   return add(db);
-  //_data = db._data;
-  //_len  = db._len;
 }
 
 int DataBuffer::set(const std::shared_ptr<DataBuffer> db) {
   return set(*db);
-  //_data = db->_data;
-  //_len  = db->_len;
 }
 
 void DataBuffer::add_new_buffer_item(const std::shared_ptr<BufferItem> bi) {
   _data.push_back(bi);
 }
-

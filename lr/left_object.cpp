@@ -68,18 +68,6 @@ int LeftObject::init() {
     return ret;
   }
 
-  //ret = _dispatcher->init();
-  //if ( ret < 0 ) {
-  //  LOG_ERROR("{}:{} dispatcher init failed", __FILE__, __LINE__);
-  //  return ret;
-  //}
-
-  //ret = _handler->init();
-  //if ( ret < 0 ) {
-  //  LOG_ERROR("{}:{} handler init failed", __FILE__, __LINE__);
-  //  return ret;
-  //}
-
   return 0;
 }
 

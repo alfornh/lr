@@ -148,8 +148,6 @@ int LeftWebSocketHandler::_decode_data(std::shared_ptr<DataBuffer> &db, int &sty
   _r_socket_package.get_cache_data(db);
   _r_socket_package.clear();
   
-  //ZLOG_DEBUG("{}:{} payload:{}", __FILE__, __LINE__, ev->_db->_len);
-
   switch (_r_socket_package._fin_rsv1_rsv2_rsv3_opcode & WebsocketPackage::MASK_OPCODE) {
   case PACKAGE_ADDITIONAL_DATA:
     stype = EVENT_TYPE_WEBSOCKET_ADDITIONAL_DATA;
@@ -164,7 +162,7 @@ int LeftWebSocketHandler::_decode_data(std::shared_ptr<DataBuffer> &db, int &sty
   break;
 
   case PACKAGE_CONNECTION_CLOSE:
-    ZLOG_INFO("{}:{} {} peer closed", __FILE__, __LINE__, __func__);
+    ZLOG_INFO(__FILE__, __LINE__, __func__, "peer closed");
     stype = PACKAGE_CONNECTION_CLOSE;
   break;
 
@@ -178,7 +176,7 @@ int LeftWebSocketHandler::_decode_data(std::shared_ptr<DataBuffer> &db, int &sty
   break;
 
   default:
-    ZLOG_ERROR("{}:{} {} unknown opcode", __FILE__, __LINE__, __func__);
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "unknown op code");
     return -1;
   }
 
