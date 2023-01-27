@@ -8,7 +8,15 @@ Generally in this framework, left side acts as server end, and right side as cli
 
 server is an example to use this application framwork.
 
+usage:
 
+  mkdir build
+  
+  cd build
+  
+  cmake ../
+  
+  make
 
 
 ![lr](lr.png "lr node")
