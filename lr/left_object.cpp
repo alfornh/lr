@@ -10,6 +10,7 @@
 #include "configure.h"
 #include "event.h"
 #include "event_pool.h"
+#include "id_set.h"
 #include "left_event_handler.h"
 #include "left_tcp_end.h"
 #include "left_event_listener.h"
@@ -43,6 +44,16 @@ int LeftObject::init() {
   }
 
   PZLOG->set_log_level(PCONFIGURE->get_log_level());
+
+
+  ConfigureServerInfo::ptr csi = STATIC_CAST(ConfigureServerInfo, PCONFIGURE->get_ci(CONFIGURE_SERVER_INFO));
+  if ( !csi ) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "csi null");
+    return -1;
+  }
+  if ( csi->_max_concurrency > 1) {
+    PSIDSET->set_max(csi->_max_concurrency);
+  }
 
   ret = PTHREADMANAGER->init();
   if ( ret < 0 ) {

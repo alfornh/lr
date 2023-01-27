@@ -47,6 +47,7 @@ set(FRAME_SRC
   ${PROJECT_SOURCE_DIR}/lr/reactor_epoll.cpp
   ${PROJECT_SOURCE_DIR}/lr/reactor_select.cpp
   ${PROJECT_SOURCE_DIR}/lr/file.cpp
+  ${PROJECT_SOURCE_DIR}/lr/id_set.cpp
   ${PROJECT_SOURCE_DIR}/lr/socket.cpp
   ${PROJECT_SOURCE_DIR}/lr/tcp_socket.cpp
   ${PROJECT_SOURCE_DIR}/lr/udp_socket.cpp

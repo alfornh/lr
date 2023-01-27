@@ -31,7 +31,7 @@ int Signals::init() {
     return ret;
   }
 
-  sigset_t set, oldset;
+  sigset_t set;
   
   // initialize set (first add all signals, then remove SIGINT)
   sigfillset(&set);
@@ -45,7 +45,7 @@ int Signals::init() {
 
   // install new signal mask and get previously installed signal mask
   // all signals are blocked except for SIGINT SIGSEGV SIGBUS SIGQUIT SIGHUP SIGKILL SIGALRM
-  sigprocmask(SIG_SETMASK, &set, &oldset);
+  sigprocmask(SIG_SETMASK, &set, NULL);
 
   sigemptyset(&_sigact.sa_mask);
   _sigact.sa_handler = &Signals::signal_handler;
@@ -82,7 +82,7 @@ int Signals::init() {
 }
 
 void Signals::signal_handler(int sig) {
-  Event::ptr e = std::make_shared<Event>();
+  Event::ptr e = MAKE_SHARED(Event);
 
   if (Signals::_stop_flag) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "caught signal:", sig);

@@ -108,6 +108,7 @@ public:
   std::mutex _mutex_for_worker_threads;
 
   std::shared_ptr<Listener> _line;
+
 };
 
 #endif//_SOCKET_H__
