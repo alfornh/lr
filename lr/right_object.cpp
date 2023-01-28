@@ -13,7 +13,6 @@ RightObject::ptr RightObject::_instance = MAKE_SHARED(RightObject);
 
 int RightObject::init() {
 
-  //PCONFIGURE->_tcp_accept_event_flag = true;
   int ret = PRIGHTEVENTLISTENER->init();
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "right listener init");

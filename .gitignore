@@ -1,5 +1,6 @@
 server/server
 server/core.*
 server/logs/
+server/lr.conf
 tags
 build/

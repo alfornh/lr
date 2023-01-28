@@ -89,7 +89,7 @@ int LeftUdpEnd::l_close(SOCKETID sid) {
   _reactor->_del(sid, _main_socket->_fd);
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
-  _sockets.clear();
+  _sockets.erase(sid);
   LOCK_GUARD_MUTEX_END
 
   Event::ptr event = std::make_shared<Event>();
