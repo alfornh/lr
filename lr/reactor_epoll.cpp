@@ -36,7 +36,7 @@ int EpollReactor::_init(IPInfo &ipi) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "reserve_thread_group");
     return -1;
   }
-  PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi._reactor_thread_num);
+  PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi._io_thread_num);
 
   _stop_flag = false;
   _epollfd = epoll_create1(EPOLL_CLOEXEC);

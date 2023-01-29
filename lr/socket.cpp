@@ -93,10 +93,10 @@ int Socket::ssend() {
     return 0;
   }
 
-  if (_w_db->_len <= BufferItem::buffer_item_capacity) {
+  if (_w_db->_data.size() == 1) {
     BufferItem::ptr bi = _w_db->_data.front();
     if (bi) {
-      len = vsend(bi->_buffer, bi->_len);
+      len = vsend(bi->_buffer + bi->_spos, bi->_len);
     }
 
   } else {
