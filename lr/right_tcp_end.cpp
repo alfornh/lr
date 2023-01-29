@@ -23,7 +23,7 @@ int RightTcpEnd::init() {
 
   switch (__ipi._protocal) {
   case PROTOCAL_TCP:
-    _main_socket = MAKE_SHARED(TcpSocket, EVENT_TYPE_SOCKET_TCP);
+    //_main_socket = MAKE_SHARED(TcpSocket, EVENT_TYPE_SOCKET_TCP);
     _stype = EVENT_TYPE_SOCKET_TCP;
   break;
 
@@ -34,9 +34,8 @@ int RightTcpEnd::init() {
 
   _r_event_pool_id = EventPool::reserve_event_queue();
 
-  _main_socket->_id = Socket::sign_socket_id();
-  _main_socket->_line = shared_from_this();
-
+  //_main_socket->_id = Socket::sign_socket_id();
+  //_main_socket->_line = shared_from_this();
 
   Value::ptr v = PCONFIGURE->get_value("right_reactor");
   if (v && v->_v == "epoll") {
@@ -94,6 +93,7 @@ int RightTcpEnd::l_recv(SOCKETID sid) {
   int ret = socket->vrecv();
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket recv");
+    return ret;
   }
 
   Event::ptr event = MAKE_SHARED(Event);
@@ -137,7 +137,8 @@ int RightTcpEnd::l_close(SOCKETID sid) {
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
   SocketContainer::iterator it = _sockets.find(sid);
-  if ( it !=  _sockets.end() && sid != _main_socket->_id ) {
+  //if ( it !=  _sockets.end() && sid != _main_socket->_id ) {
+  if ( it !=  _sockets.end() ) {
     socket = it->second;
     _sockets.erase(it);
   }
@@ -165,6 +166,11 @@ std::shared_ptr<Socket> RightTcpEnd::make_right() {
   int ret;
 
   c = MAKE_SHARED(TcpSocket, EVENT_TYPE_SOCKET_TCP);
+  c->_id = Socket::sign_socket_id();
+  if (c->_id < 1) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "no socket available");
+    return Socket::ptr();
+  }
 
   if (c->vinit(__ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket init");
@@ -183,7 +189,6 @@ std::shared_ptr<Socket> RightTcpEnd::make_right() {
     return Socket::ptr();
   }
  
-  c->_id = Socket::sign_socket_id();
   c->_line = shared_from_this();
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
@@ -191,6 +196,7 @@ std::shared_ptr<Socket> RightTcpEnd::make_right() {
   SocketContainer::iterator it = _sockets.find(c->_id);
   if (it != _sockets.end()) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "repeated socket id ", c->_id);
+    return Socket::ptr();
   }
   _sockets[c->_id] = c;
   _reactor->_add(c->_id, c->_fd);
