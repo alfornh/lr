@@ -60,7 +60,7 @@ void SelectReactor::listen_i_proc() {
 
   while ( !_stop_flag ) {
     maxfd = 0;
-    tv.tv_sec = 30;
+    tv.tv_sec = 1;
     tv.tv_usec = 0;
 
     FD_ZERO(&_rfds);
@@ -79,7 +79,7 @@ void SelectReactor::listen_i_proc() {
       FD_SET(fd, &_rfds);
       FD_SET(fd, &_efds);
 
-      tit++;
+      ++tit;
     }
 
     if (_stop_flag) {
@@ -136,7 +136,6 @@ void SelectReactor::listen_i_proc() {
         break;
       }
     }
-
   }
 }
 

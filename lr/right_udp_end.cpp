@@ -66,6 +66,7 @@ int RightUdpEnd::stop() {
 
 int RightUdpEnd::l_recv(SOCKETID sid) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
+  int ret;
 
   UdpSocket::ptr sock;//= _main_socket->vurecv();
 
@@ -78,14 +79,18 @@ int RightUdpEnd::l_recv(SOCKETID sid) {
   sock = it->second;
   LOCK_GUARD_MUTEX_END
 
-  sock->vrecv();
+  ret = sock->vrecv();
+  if (ret < 0) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "udpsocket recv error");
+    return -1;
+  }
 
   Event::ptr event = MAKE_SHARED(Event);
   event->_es = sock;
   event->_stype = _stype | EVENT_SUBTYPE_READ;
 
   ADD_EVENT(_r_event_pool_id, event);
-  return 0;
+  return ret;
 }
 
 int RightUdpEnd::l_write(SOCKETID sid) {
@@ -128,8 +133,8 @@ int RightUdpEnd::l_close(SOCKETID sid) {
 
   LOCK_GUARD_MUTEX_END
 
-  sock->vclose();
   _reactor->_del(sid, sock->_fd);
+  sock->vclose();
 
   Event::ptr event = std::make_shared<Event>();
   event->_es = sock;
@@ -145,12 +150,17 @@ std::shared_ptr<UdpSocket> RightUdpEnd::make_right() {
   int ret;
 
   c = MAKE_SHARED(UdpSocket, EVENT_TYPE_SOCKET_UDP);
+  c->_id = Socket::sign_socket_id();
+  if (c->_id < 1) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "no socket id available");
+    return c;
+  }
+
   if (c->vinit(__ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket init");
     return UdpSocket::ptr();
   }
  
-  c->_id = Socket::sign_socket_id();
   c->_line = shared_from_this();
 
   ret = c->nonblock(false);
@@ -164,6 +174,7 @@ std::shared_ptr<UdpSocket> RightUdpEnd::make_right() {
   SocketContainer::iterator it = _sockets.find(c->_id);
   if (it != _sockets.end()) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "repeated socket id ", c->_id);
+    return UdpSocket::ptr();
   }
   _sockets[c->_id] = c;
 

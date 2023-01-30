@@ -19,11 +19,16 @@ Socket::Socket() {
   _r_db = MAKE_SHARED(DataBuffer);
   _w_db = MAKE_SHARED(DataBuffer);
   _socket_status = SOCKET_STATUS_NULL;
+  _fd = 0;
+  _id = INVALIDID;
 }
 
 Socket::~Socket() {
   _socket_status = SOCKET_STATUS_CLOSE;
-  close(_fd);
+  if (_fd > 0) {
+    close(_fd);
+    _fd = 0;
+  }
   PSIDSET->put(_id);
   _id = INVALIDID;
 }

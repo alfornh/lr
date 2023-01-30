@@ -11,6 +11,7 @@
 #include "event.h"
 #include "event_pool.h"
 #include "ipinfo.h"
+#include "listener.h"
 #include "utils.h"
 #include "zlog.h"
 
@@ -187,7 +188,7 @@ std::shared_ptr<UdpSocket> UdpSocket::lrecv() {
   }
 
   socket->_id = Socket::sign_socket_id();
-  socket->_fd = dup(_fd);
+  socket->_fd = 0;//dup(_fd);
   socket->_line = _line;
   socket->_ipi._ip = inet_ntoa(addr.sin_addr);
   socket->_ipi._port = ntohs(addr.sin_port);
@@ -214,7 +215,7 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
   addr.sin_port  = htons(socket->_ipi._port);
   addr.sin_addr.s_addr = inet_addr(socket->_ipi._ip.c_str());
 
-  if (blen <= BufferItem::buffer_item_capacity) {
+  if (socket->_w_db->_data.size() == 1) {
     BufferItem::ptr bi = socket->_w_db->_data.front();
     buf = bi->_buffer;
   } else {
@@ -224,7 +225,7 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_w_fd)
   do {
-    ret = ::sendto(_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
+    ret = ::sendto(_line->_main_socket->_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
     if (ret < 0) {
       if (errno == EINTR) {
         ZLOG_WARN(__FILE__, __LINE__, __func__, "EINTR");
