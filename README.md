@@ -19,7 +19,7 @@ usage:
   make
 
 
-![lr](lr.png "lr node")
+![lr](lr.png)
 
 
 # lr
