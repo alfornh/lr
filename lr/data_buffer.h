@@ -121,6 +121,34 @@ public:
     return l;
   }
 
+  int get_until(char *buf, const int len, const char c, bool &flag) {
+    if (_len < 1) {
+      return 0;
+    }
+
+    int l = _len;
+    if (len < _len) {
+      l = len;
+    }
+
+    flag = false;
+    int i = 0;
+    while (i < l) {
+      if (_buffer[_spos + i] == c) {
+        *(buf + i) = _buffer[_spos + i];
+        flag = true;
+        break;
+      }
+
+      *(buf + i) = _buffer[_spos + i];
+
+      ++i;
+    }
+
+    return i;
+  }
+
+
   int drop(const int len) {
     int ret;
     if (_len < 1) {
@@ -171,8 +199,9 @@ public:
   int get(std::vector<char> &buf);
   int get(DataBuffer &buf);
   int get(std::shared_ptr<DataBuffer> db);
+  int getline(char *buf, int blen);
 
-
+  int moveline(char *buf, int blen);
   int move(char *buf, const int len);
   int move(DataBuffer &db);
   int move(std::shared_ptr<DataBuffer> db);

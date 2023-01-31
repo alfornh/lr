@@ -141,6 +141,34 @@ int DataBuffer::move(char *buf, const int len) {
   return used;
 }
 
+int DataBuffer::getline(char *buf, int blen) {
+  int used = 0;
+  bool lb = false;
+  BufferItem::ptr bi;
+  if (_len < 1 || !buf) {
+    return 0;
+  }
+
+  for (const BufferItem::ptr &bi:_data) {
+    if (used >= blen || used >= _len) {
+      break;
+    }
+
+    used += bi->get_until(buf + used, blen - used, '\n', lb);
+    if (lb) {
+      break;
+    }
+  }
+
+  return used;
+}
+
+int DataBuffer::moveline(char *buf, int blen) {
+  int ret = getline(buf, blen);
+  drop(ret);
+  return ret;
+}
+
 int DataBuffer::get(char *buf, int blen) {
   int used = 0;
   BufferItem::ptr bi;
