@@ -2,12 +2,14 @@
 
 #include <string>
 
+#include "plt/net-inc.h"
+
 #include "configure.h"
 #include "data_buffer.h"
 #include "event.h"
 #include "event_pool.h"
 #include "ipinfo.h"
-#include "reactor_epoll.h"
+#include "reactor.h"
 #include "reactor_select.h"
 #include "tcp_socket.h"
 #include "thread_manager.h"
@@ -16,7 +18,7 @@
 
 int LeftTcpEnd::init() {
   _stop_flag = false;
-  switch (__ipi._protocal) {
+  switch (_ipi->_protocal) {
   case PROTOCAL_TCP:
     _stype = EVENT_TYPE_SOCKET_TCP;
   break;
@@ -30,11 +32,24 @@ int LeftTcpEnd::init() {
   break;
 
   default:
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "unknown protocal type", __ipi._protocal);
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "unknown protocal type", _ipi->_protocal);
     return -1;
   }
 
   _r_event_pool_id = EventPool::reserve_event_queue();
+
+  if (PCONFIGURE->is_key_equal_value("left_reactor", "async")) {
+      _reactor = MAKE_SHARED(AsyncIOMultiplex, Reactor::PROTOCOL_TCP);
+  } else {
+      _reactor = MAKE_SHARED(SelectReactor, Reactor::PROTOCOL_TCP);
+  }
+
+  _reactor->_line = shared_from_this();
+
+  if (_reactor->_init(_ipi) < 0) {
+      ZLOG_ERROR(__FILE__, __LINE__, __func__, "reactor init error");
+      return -1;
+  }
 
   _main_socket = MAKE_SHARED(TcpSocket, _stype);
   _main_socket->_id = Socket::sign_socket_id();
@@ -43,12 +58,12 @@ int LeftTcpEnd::init() {
 
   //_main_socket->_r_event_pool_id = _r_event_pool_id;
 
-  if (_main_socket->vinit(__ipi) < 0) {
+  if (_main_socket->vinit(_ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "vinit");
     return -1;
   }
 
-  _main_socket->nonblock(true);
+  _main_socket->nonblock(false);
   _main_socket->reuseaddr(true);
 
   if (_main_socket->vbind() < 0) {
@@ -58,20 +73,6 @@ int LeftTcpEnd::init() {
 
   if (_main_socket->vlisten() < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "vlisten");
-    return -1;
-  }
-
-  Value::ptr v = PCONFIGURE->get_value("left_reactor");
-  if (v && v->_v == "epoll") {
-    _reactor = MAKE_SHARED(EpollReactor);
-  } else {
-    _reactor = MAKE_SHARED(SelectReactor);
-  }
-
-  _reactor->_line = shared_from_this();
-
-  if (_reactor->_init(__ipi) < 0) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "reactor init error");
     return -1;
   }
 
@@ -175,6 +176,39 @@ int LeftTcpEnd::l_recv(SOCKETID sid) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket recv");
     return ret;
   }
+
+  if (ret > 0) {
+    Event::ptr event = std::make_shared<Event>();
+    event->_es = sock;
+    event->_stype = _stype | EVENT_SUBTYPE_READ;
+    
+    ADD_EVENT(_r_event_pool_id, event);
+  }
+
+  return ret;
+}
+
+int LeftTcpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) {
+  ZLOG_DEBUG(__FILE__, __LINE__, __func__);
+  Socket::ptr sock = Socket::ptr();
+
+  LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
+  SocketContainer::iterator it = _sockets.find(sid);
+  if ( it == _sockets.end() ) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket not found", sid);
+    return -1;
+  }
+
+  sock = it->second;
+  if (!sock || sock->_socket_status == SOCKET_STATUS_CLOSE) {
+    _sockets.erase(it);
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket closed", sid);
+    return -1;
+  }
+
+  LOCK_GUARD_MUTEX_END
+
+  int ret = sock->add_r_data(bi);
 
   Event::ptr event = std::make_shared<Event>();
   event->_es = sock;

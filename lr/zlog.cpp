@@ -1,20 +1,17 @@
 #include "zlog.h"
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <time.h>
 
 #include <exception>
 #include <fstream>
+
+#include "plt/oth-inc.h"
+#include "plt/dis-inc.h"
 
 #include "file.h"
 #include "utils.h"
 
 std::shared_ptr<ZLog> ZLog::_instance = MAKE_SHARED(ZLog);
-
-#define DEFAULT_LOG_PATH "logs/"
-#define DEFAULT_LOG_FILE_PREFIX "lr"
-#define DEFAULT_ROTATE_SIZE 4 * 1024 * 1024
 
 std::string Record::to_string() {
   char head[128] = {0};
@@ -73,16 +70,11 @@ std::string Record::to_string() {
 }
 
 bool ZLog::fexist(const std::string f) {
-  int ret = access(f.c_str(), F_OK);
-  if (ret == 0) {
-    return true;
-  }
-
-  return false;
+  return zfexist(f.c_str());
 }
 
 int ZLog::rotate() {
-  int now = time(0);
+  TIME_T now = time(0);
 
   std::string lfile = _path + _prefix + "." + std::to_string(now) + ".txt";
 
@@ -98,11 +90,11 @@ int ZLog::rotate() {
 int ZLog::init() {
   int ret;
   _path = DEFAULT_LOG_PATH;
-  if (! fexist(_path)) {
-    ret = mkdir(_path.c_str(), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-    if (ret < 0) {
-      std::cout << "create log directory failed" << std::endl;
-      return -1;
+  if (! zfexist(_path.c_str())) {
+    ret = zmkdir(_path.c_str());
+    if ( ret < 0 ) {
+      ZLOG_ERROR(__FILE__, __LINE__, __func__, "zmkdir", _path);
+      return ret;
     }
   }
 

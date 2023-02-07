@@ -9,7 +9,8 @@
 #include <future>
 #include <unordered_map>
 
-#include "base_type.h"
+#include "plt/type-inc.h"
+
 #include "utils.h"
 #include "zlog.h"
 #include "task.h"

@@ -1,9 +1,11 @@
 #include "signals.h"
 
+#include <signal.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <signal.h>
 #include <unistd.h>
+
+#include "plt/oth-inc.h"
 
 #include "event_type.h"
 #include "event.h"
@@ -14,8 +16,6 @@
 
 std::shared_ptr<Signals> Signals::_instance = std::make_shared<Signals>();
 bool Signals::_stop_flag = false;
-
-static struct sigaction _sigact;
 
 Signals::Signals() {
   _stype = EVENT_TYPE_SIGNAL;
@@ -31,48 +31,19 @@ int Signals::init() {
     return ret;
   }
 
-  sigset_t set;
+  set_signal_handler(SIGHUP,   &Signals::signal_handler);
+  set_signal_handler(SIGINT,   &Signals::signal_handler);
+  set_signal_handler(SIGQUIT,  &Signals::signal_handler);
+  set_signal_handler(SIGBUS,   &Signals::signal_handler);
+  set_signal_handler(SIGKILL,  &Signals::signal_handler);
+  set_signal_handler(SIGSEGV,  &Signals::signal_handler);
+  set_signal_handler(SIGALRM,  &Signals::signal_handler);
+  set_signal_handler(SIGILL,   &Signals::signal_handler);
+  set_signal_handler(SIGFPE,   &Signals::signal_handler);
+  set_signal_handler(SIGTERM,  &Signals::signal_handler);
+  //set_signal_handler(SIGBREAK , &Signals::signal_handler);
+  //set_signal_handler(SIGABRT,  &Signals::signal_handler);
   
-  // initialize set (first add all signals, then remove SIGINT)
-  sigfillset(&set);
-  sigdelset(&set, SIGINT);
-  sigdelset(&set, SIGSEGV);
-  sigdelset(&set, SIGBUS);
-  sigdelset(&set, SIGQUIT);
-  sigdelset(&set, SIGHUP);
-  sigdelset(&set, SIGKILL);
-  sigdelset(&set, SIGALRM);
-
-  // install new signal mask and get previously installed signal mask
-  // all signals are blocked except for SIGINT SIGSEGV SIGBUS SIGQUIT SIGHUP SIGKILL SIGALRM
-  sigprocmask(SIG_SETMASK, &set, NULL);
-
-  sigemptyset(&_sigact.sa_mask);
-  _sigact.sa_handler = &Signals::signal_handler;
-  _sigact.sa_flags = SA_RESTART;
-
-
-  sigaddset(&_sigact.sa_mask, SIGINT);
-  sigaction(SIGINT, &_sigact, (struct sigaction *)NULL);
-
-  sigaddset(&_sigact.sa_mask, SIGSEGV);
-  sigaction(SIGSEGV, &_sigact, (struct sigaction *)NULL);
-
-  sigaddset(&_sigact.sa_mask, SIGBUS);
-  sigaction(SIGBUS, &_sigact, (struct sigaction *)NULL);
-
-  sigaddset(&_sigact.sa_mask, SIGQUIT);
-  sigaction(SIGQUIT, &_sigact, (struct sigaction *)NULL);
-
-  sigaddset(&_sigact.sa_mask, SIGHUP);
-  sigaction(SIGHUP, &_sigact, (struct sigaction *)NULL);
-
-  sigaddset(&_sigact.sa_mask, SIGKILL);
-  sigaction(SIGKILL, &_sigact, (struct sigaction *)NULL);
-
-  sigaddset(&_sigact.sa_mask, SIGALRM);
-  sigaction(SIGALRM, &_sigact, (struct sigaction *)NULL);
-
   _r_event_pool_id = EventPool::reserve_event_queue();
   _thread_group_id = PTHREADMANAGER->reserve_thread_group();
   PTHREADMANAGER->start(_thread_group_id, 1);
@@ -142,7 +113,6 @@ void Signals::dump_stack(void) {
 
 void Signals::clean_up(void) {
   ZLOG_WARN(__FILE__, __LINE__, __func__, "server stopped");
-  sigemptyset(&_sigact.sa_mask);
   /* Do any cleaning up chores here */
 
   return ;
@@ -152,8 +122,5 @@ void Signals::stop() {
   ZLOG_WARN(__FILE__, __LINE__, __func__);
   Signals::_stop_flag = true;
 
-  sigset_t set, oldset;
-  sigfillset(&set);
-  sigprocmask(SIG_SETMASK, &set, &oldset);
 }
 

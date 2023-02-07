@@ -2,96 +2,97 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/file.h>
+#include <stdio.h>
+//#include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 
+#include "utils.h"
 #include "zlog.h"
+
 
 File::File(std::string fname) {
   _name = fname;
-  _fd = 0;
+  _file = NULL;
 }
 
 File::File(const char *fname) {
   _name = std::string(fname);
-  _fd = 0;
+  _file = NULL;
 }
 
 File::~File() {
-  if (_fd) {
+  if (_file) {
     unlock();
-    ::close(_fd);
+    ::fclose(_file);
   }
-  _fd = 0;
+  _file = NULL;
 }
 
 int File::close() {
-  int ret;
-  if (_fd) {
+  int ret = 0;
+  if (_file) {
     unlock();
-    ret = ::close(_fd);
+    ret = ::fclose(_file);
+    _file = NULL;
   }
 
-  _fd = 0;
   return ret;
 }
 
 int File::open() {
   int ret;
   struct stat fst;
-  _fd = ::open(_name.c_str(), O_RDWR|O_CREAT, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
-  if (_fd < 0) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, _fd, "open failed", _name);
-    return _fd;
+  _file = ::fopen(_name.c_str(), "a+");
+  if (_file == NULL) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "open failed", _name);
+    return -1;
   }
 
-  ret = ::fstat(_fd, &fst);
+  ret = ::stat(_name.c_str(), &fst);
   if (ret < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, ret);
     return ret;
   }
-
   _size = fst.st_size;
- 
-  return _fd;
+  return 0;
 }
 
 int File::cursor(int pos, int whence) {
   int ret;
-  if ( _fd < 1) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, _fd);
+  if ( _file == NULL) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__);
     return -1;
   }
-
-  ret = ::lseek(_fd, pos, whence);
-
+  ret = ::fseek(_file, pos, whence);
   return ret;
 }
 
 int File::cursor_head() {
-  int ret = ::lseek(_fd, 0, SEEK_SET);
+  int ret = ::fseek(_file, 0, SEEK_SET);
   return ret;
 }
 
 int File::cursor_end() {
-  int ret = ::lseek(_fd, 0, SEEK_END);
+  int ret = ::fseek(_file, 0, SEEK_END);
   return ret;
 }
 
 int File::cursor_now() {
-  return ::lseek(_fd, 0, SEEK_CUR);
+  return ::ftell(_file);
 }
 
 int File::read(char *buf, int len) {
   int ret;
-  int l = 0;
   do {
-    ret = ::read(_fd, buf + l, len - l);
-    if (ret < 0) {
+    ret = ::fread(buf, len, 1, _file);
+    if (ret <= 0) {
+      if (::feof(_file)) {
+        return 0;
+      }
       if (errno == EINTR) {
         continue;
       }
@@ -100,77 +101,53 @@ int File::read(char *buf, int len) {
       return -1;
     }
 
-    if (ret == 0)  {
-      break;
-    }
-
-    l += ret;
     break;
-
   } while ( true );
 
-  buf[l] = '\0';
-
-  return l;
+  return ret;
 }
 
 int File::readline(char *buf, int len) {
-  int ret;
-  int l = 0;
-  do {
-    ret = ::read(_fd, buf + l, 1);
-    if (ret < 0) {
-      if (errno == EINTR) {
-        continue;
-      }
+  memzero(buf, len);
+  char *cr = ::fgets(buf, len, _file);
+  if ( !cr ) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__);
+    return -1;
+  }
 
-      ZLOG_ERROR(__FILE__, __LINE__, __func__, ret);
-      return -1;
-    }
-
-    l += ret;
-
-    if (ret == 0 || buf[l - 1] == '\n' || (l >= len)) {
-      break;
-    }
-
-  } while ( true );
-
-  buf[l] = '\0';
-
-  return l;
+  return strlen(buf);
 }
 
 int File::lock() {
-  return ::flock(_fd, LOCK_EX);
+  return 0;
+  //return ::flock(_fd, LOCK_EX);
 }
 
 int File::unlock() {
-  return ::flock(_fd, LOCK_UN);
+  return 0;
+  //return ::flock(_fd, LOCK_UN);
 }
 
 int File::sync() {
-  return ::fsync(_fd);
+  return ::fflush(_file);
 }
 
-int File::write(const std::string msg) {
+int File::write(const std::string &msg) {
   return File::write(msg.c_str(), msg.size());
 }
 
 int File::write(const char *buf, const int len) {
   int ret = 0;
   int l = 0;
-  if ( !_fd ) {
+  if ( !_file ) {
     return -1;
   }
   do {
-    ret = ::write(_fd, buf + l, len - l);
+    ret = ::fwrite(buf, 1, len, _file);
     if (ret < 0) {
       if (errno == EINTR) {
         continue;
       }
-
-      ZLOG_ERROR(__FILE__, __LINE__, __func__, ret);
       return ret;
     }
 

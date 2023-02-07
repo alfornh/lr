@@ -1,11 +1,11 @@
-#include "signal_handler.h"
+#include "signals_handler.h"
 
 #include "event.h"
 #include "event_type.h"
 #include "left_object.h"
 #include "zlog.h"
 
-int SignalHandler::handle(EVENTID id, std::shared_ptr<Event> ev) {
+int SignalsHandler::handle(EVENTID id, std::shared_ptr<Event> ev) {
   ZLOG_INFO(__FILE__, __LINE__, __func__, "get signal event:", id); 
   switch (id) {
   case EVENT_TYPE_SIGNAL_SIGHUP:

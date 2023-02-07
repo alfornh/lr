@@ -7,12 +7,11 @@
 WebsocketPackage::WebsocketPackage() {
   _fin_rsv1_rsv2_rsv3_opcode = 0;
   _mask_payloadlen           = 0;
-  _maskinfkey[4]             = { 0 };
   _payloadlen                = 0;
+  memzero(_maskinfkey, sizeof(_maskinfkey));
   _db_payload                = std::make_shared<DataBuffer>();
   _db_cache                  = std::make_shared<DataBuffer>();
 }
-
 
 int WebsocketPackage::get_websocketpackage_len(char const *header, int len) {
   if ( len < EVENT_HEAD_LEN ) {
@@ -31,7 +30,6 @@ int WebsocketPackage::get_websocketpackage_len(char const *header, int len) {
     return -1;
   }
 
-
   const uint16_t *pll = (const uint16_t *)(&(header[2]));
 
   ret = ntoh16(*pll);
@@ -39,6 +37,9 @@ int WebsocketPackage::get_websocketpackage_len(char const *header, int len) {
 }
 
 int WebsocketPackage::from(std::shared_ptr<DataBuffer> dbuf) {
+  if (dbuf->size() < 1) {
+    return 0;
+  }
   BufferItem::ptr bi = dbuf->_data.front();
   if ( !bi ) {
     ZLOG_INFO(__FILE__, __LINE__, __func__, "no data available");
@@ -272,37 +273,6 @@ int WebsocketPackage::to(DataBuffer &buf) {
 
 int WebsocketPackage::to(DataBuffer::ptr db) {
   return to(*db);
-  /*
-  if (_db_cache->size() < 1) {
-    LOG_INFO("{}:{} no data in data buffer cache", __FILE__, __LINE__);
-    return 0;
-  }
-
-  char head[32] = { 0 };
-  _fin_rsv1_rsv2_rsv3_opcode = (MASK_FIN | PACKAGE_TEXT_DATA);
-  head[0] = _fin_rsv1_rsv2_rsv3_opcode;
-
-  size_t s = _db_cache->size();
-
-  if (s < 126) {
-    _mask_payloadlen = s;
-    head[1] = _mask_payloadlen;
-  } else if (s >= 126 && s < 65535) {
-    head[1] = 126;
-    uint16_t s16 = hton16(s);
-    memcpy(&(head[2]), &s16, 2);
-  } else {
-    head[1] = 127;
-    uint64_t s64 = hton64(s);
-    memcpy(&(head[2]), &s64, 8);
-  }
-
-  db->set(head, strlen(head));
-
-  db->add(_db_cache);
-
-  return s;
-  */
 }
 
 

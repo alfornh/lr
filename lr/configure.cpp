@@ -3,7 +3,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -279,8 +278,8 @@ std::shared_ptr<ConfigureItem> Configure::parse_lr_tu(const int ciid) {
   while (ptwo && *ptwo) {
     ptwo = extract_section_from_str(ptwo, word, sizeof(word), ',');
 
-    IPInfo ipi;
-    int ret = get_ipi_from_str(word, ipi);
+    IPInfo::ptr ipi = MAKE_SHARED(IPInfo);
+    int ret = get_ipi_from_str(word, *ipi);
     if (ret < 0) {
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "invalid line info", word);
       continue;

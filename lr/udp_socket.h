@@ -14,7 +14,7 @@ public:
   virtual ~UdpSocket() { }
 
 public:
-  virtual int vinit(IPInfo &);
+  virtual int vinit(std::shared_ptr<IPInfo> );
   virtual int vbind();
   virtual int vrecv();
   virtual int vsend(const char *buf, const int blen);

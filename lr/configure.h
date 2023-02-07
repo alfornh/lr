@@ -66,7 +66,6 @@ private:
   int get_ipi_from_str(const char *str, IPInfo &ipi);
 
 public:
-  //result 0 not equal, 1 equal, -1 no key
   bool is_key_equal_value(const std::string& key, const std::string& value);
 
 private:

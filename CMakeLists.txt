@@ -2,8 +2,47 @@ cmake_minimum_required(VERSION 2.8)
 
 PROJECT(lr)
 
+MESSAGE(STATUS "Project: lr")
+
+MESSAGE(STATUS "OS: ${CMAKE_SYSTEM_NAME}")
+
+set(PLATFORM_INC )
+set(PLATFORM_SRC )
+
+IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set(PLATFORM_INC
+    ${PROJECT_SOURCE_DIR}/lr/linux/inc/type-inc.h
+    ${PROJECT_SOURCE_DIR}/lr/linux/inc/net-inc.h
+    ${PROJECT_SOURCE_DIR}/lr/linux/inc/dis-inc.h
+    ${PROJECT_SOURCE_DIR}/lr/linux/inc/oth-inc.h
+  )
+  set(PLATFORM_SRC
+    ${PROJECT_SOURCE_DIR}/lr/linux/net.cpp
+    ${PROJECT_SOURCE_DIR}/lr/linux/dis.cpp
+    ${PROJECT_SOURCE_DIR}/lr/linux/oth.cpp
+  )
+ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(PLATFORM_INC
+    ${PROJECT_SOURCE_DIR}/lr/win32/inc/type-inc.h
+    ${PROJECT_SOURCE_DIR}/lr/win32/inc/net-inc.h
+    ${PROJECT_SOURCE_DIR}/lr/win32/inc/dis-inc.h
+    ${PROJECT_SOURCE_DIR}/lr/win32/inc/oth-inc.h
+  )
+  set (PLATFORM_SRC
+    ${PROJECT_SOURCE_DIR}/lr/win32/net.cpp
+    ${PROJECT_SOURCE_DIR}/lr/win32/dis.cpp
+    ${PROJECT_SOURCE_DIR}/lr/win32/oth.cpp
+  )
+ELSE ()
+  MESSAGE(FATAL_ERROR "unsupport operating system: ${CMAKE_SYSTEM_NAME}")
+ENDIF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+
+file(COPY ${PLATFORM_INC} DESTINATION ${PROJECT_SOURCE_DIR}/lr/plt)
+
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
+
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -16,7 +55,7 @@ if(COMPILER_SUPPORTS_CXX11)
 elseif(COMPILER_SUPPORTS_CXX0X)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-  message(STATUS "Compiler ${CMAKE_CXX_COMPILER} don't support c++11.")
+  message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER} does not support c++11.")
 endif()
 
 set(lr_VERSION_MAJOR 1)
@@ -27,7 +66,10 @@ configure_file(
  ${PROJECT_SOURCE_DIR}/server/lr.conf
 )
 
-MESSAGE(STATUS "Project: lr")
+configure_file(
+ ${PROJECT_SOURCE_DIR}/lr/lr.conf
+ ${PROJECT_SOURCE_DIR}/gate/lr.conf
+)
 
 
 include_directories(
@@ -44,7 +86,6 @@ set(FRAME_SRC
   ${PROJECT_SOURCE_DIR}/lr/signals.cpp
   ${PROJECT_SOURCE_DIR}/lr/event_queue.cpp
   ${PROJECT_SOURCE_DIR}/lr/configure.cpp
-  ${PROJECT_SOURCE_DIR}/lr/reactor_epoll.cpp
   ${PROJECT_SOURCE_DIR}/lr/reactor_select.cpp
   ${PROJECT_SOURCE_DIR}/lr/file.cpp
   ${PROJECT_SOURCE_DIR}/lr/id_set.cpp
@@ -67,17 +108,18 @@ set(FRAME_SRC
   ${PROJECT_SOURCE_DIR}/lr/right_object.cpp
 )
 
-
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lr)
 
 set(FRAME_NAME lr)
 set(SERVER_NAME server)
 
 
-add_library(${FRAME_NAME} STATIC ${FRAME_SRC})
+add_library(${FRAME_NAME} STATIC ${PLATFORM_SRC} ${FRAME_SRC})
 
 
-target_link_libraries(${FRAME_NAME} pthread dl)
+IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+  target_link_libraries(${FRAME_NAME} pthread dl)
+ENDIF (CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/server)
 
@@ -91,9 +133,24 @@ set(SERVER_SRC
   ${PROJECT_SOURCE_DIR}/server/right_tcp_handler.cpp
   ${PROJECT_SOURCE_DIR}/server/right_udp_handler.cpp
   ${PROJECT_SOURCE_DIR}/server/timer_handler.cpp
-  ${PROJECT_SOURCE_DIR}/server/signal_handler.cpp
+  ${PROJECT_SOURCE_DIR}/server/signals_handler.cpp
 )
 
 add_executable(${SERVER_NAME} ${SERVER_SRC})
+target_link_libraries(${SERVER_NAME} ${FRAME_NAME})
 
-target_link_libraries(${SERVER_NAME} pthread dl ${FRAME_NAME})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/gate)
+set(GATE_NAME gate)
+set(GATE_SRC
+  ${PROJECT_SOURCE_DIR}/gate/gate.cpp
+  ${PROJECT_SOURCE_DIR}/gate/left_tcp_handler.cpp
+  ${PROJECT_SOURCE_DIR}/gate/left_udp_handler.cpp
+  ${PROJECT_SOURCE_DIR}/gate/right_tcp_handler.cpp
+  ${PROJECT_SOURCE_DIR}/gate/right_udp_handler.cpp
+  ${PROJECT_SOURCE_DIR}/gate/timer_handler.cpp
+  ${PROJECT_SOURCE_DIR}/gate/signals_handler.cpp
+  ${PROJECT_SOURCE_DIR}/gate/from_and_to.cpp
+)
+add_executable(${GATE_NAME} ${GATE_SRC})
+target_link_libraries(${GATE_NAME} ${FRAME_NAME})
+

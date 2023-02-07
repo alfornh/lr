@@ -1,7 +1,7 @@
 #include "utils.h"
 
 #include <math.h>
-#include <netinet/in.h>
+//#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,11 +33,19 @@ inline bool is_host_big_endian() {
 }
 
 uint16_t ntoh16(uint16_t u16) {
-  return ntohs(u16);
+  if (is_host_big_endian()) {
+    return u16;
+  }
+  return ((u16 & 0x00FF) << 8) | ((u16 & 0xFF00) >> 8);
+  //return ntohs(u16);
 }
 
 uint32_t ntoh32(uint32_t u32) {
-  return ntohl(u32);
+  if (is_host_big_endian()) {
+      return u32;
+  }
+  return ((u32 & 0x000000FF) << 24) | ((u32 & 0x0000FF00) << 8) | ((u32 & 0x00FF0000) >> 8) | ((u32 & 0xFF000000) >> 24);
+  //return ntohl(u32);
 }
 
 uint64_t ntoh64(uint64_t u64) {
@@ -48,16 +56,25 @@ uint64_t ntoh64(uint64_t u64) {
   uint32_t u64_l = u64 & 0xFFFFFFFF;
   uint32_t u64_h = (u64 >> 32) & 0xFFFFFFFF;
 
-  uint64_t u64_ = ntohl(u64_l);
-  return (u64_ << 32) | ntohl(u64_h);
+  uint64_t u64_ = ntoh32(u64_l);
+  return (u64_ << 32) | ntoh32(u64_h);
 }
 
 uint16_t hton16(uint16_t u16) {
-  return htons(u16);
+  if (is_host_big_endian()) {
+    return u16;
+  }
+
+  return ((u16 & 0x00FF) << 8) | ((u16 & 0xFF00) >> 8);
+  //return htons(u16);
 }
 
 uint32_t hton32(uint32_t u32) {
-  return htonl(u32);
+  if (is_host_big_endian()) {
+    return u32;
+  }
+  return ((u32 & 0x000000FF) << 24) | ((u32 & 0x0000FF00) << 8 ) | ((u32 & 0x00FF0000) >> 8) | ((u32 & 0xFF000000) >> 24) ;
+  //return htonl(u32);
 }
 
 uint64_t hton64(uint64_t u64) {
@@ -68,8 +85,8 @@ uint64_t hton64(uint64_t u64) {
   uint32_t u64_l = u64 & 0xFFFFFFFF;
   uint32_t u64_h = (u64 >> 32) & 0xFFFFFFFF;
 
-  uint64_t u64_ = htonl(u64_l);
-  return (u64_ << 32) | htonl(u64_h);
+  uint64_t u64_ = hton32(u64_l);
+  return (u64_ << 32) | hton32(u64_h);
 }
 
 inline bool isspace(const char c) {

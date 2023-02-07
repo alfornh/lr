@@ -2,14 +2,15 @@
 
 #include <string>
 
+#include "plt/net-inc.h"
+
 #include "configure.h"
 #include "data_buffer.h"
 #include "event.h"
 #include "event_pool.h"
 #include "reactor.h"
-#include "reactor_epoll.h"
+//#include "reactor_epoll.h"
 #include "reactor_select.h"
-#include "tcp_socket.h"
 #include "thread_manager.h"
 #include "timer.h"
 #include "udp_socket.h"
@@ -19,7 +20,7 @@
 int RightUdpEnd::init() {
   _stop_flag = false;
 
-  switch (__ipi._protocal) {
+  switch (_ipi->_protocal) {
   case PROTOCAL_UDP:
     _stype = EVENT_TYPE_SOCKET_UDP;
   break;
@@ -31,16 +32,15 @@ int RightUdpEnd::init() {
 
   _r_event_pool_id = EventPool::reserve_event_queue();
 
-  Value::ptr v = PCONFIGURE->get_value("right_reactor");
-  if (v && v->_v == "epoll") {
-    _reactor = MAKE_SHARED(EpollReactor);
+  if (PCONFIGURE->is_key_equal_value("right_reactor", "async")) {
+    _reactor = MAKE_SHARED(AsyncIOMultiplex, Reactor::PROTOCOL_UDP);
   } else {
-    _reactor = MAKE_SHARED(SelectReactor);
+    _reactor = MAKE_SHARED(SelectReactor, Reactor::PROTOCOL_UDP);
   }
 
   _reactor->_line = shared_from_this();
 
-  if (_reactor->_init(__ipi) < 0) {
+  if (_reactor->_init(_ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "_reactor init");
     return -1;
   }
@@ -84,6 +84,31 @@ int RightUdpEnd::l_recv(SOCKETID sid) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "udpsocket recv error");
     return -1;
   }
+
+  Event::ptr event = MAKE_SHARED(Event);
+  event->_es = sock;
+  event->_stype = _stype | EVENT_SUBTYPE_READ;
+
+  ADD_EVENT(_r_event_pool_id, event);
+  return ret;
+}
+
+int RightUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) {
+  ZLOG_DEBUG(__FILE__, __LINE__, __func__);
+  int ret;
+
+  UdpSocket::ptr sock;
+
+  LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
+  SocketContainer::iterator it = _sockets.find(sid);
+  if ( it == _sockets.end()) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket not found", sid);
+    return -1;
+  }
+  sock = it->second;
+  LOCK_GUARD_MUTEX_END
+
+  ret = sock->add_r_data(bi);
 
   Event::ptr event = MAKE_SHARED(Event);
   event->_es = sock;
@@ -156,7 +181,7 @@ std::shared_ptr<UdpSocket> RightUdpEnd::make_right() {
     return c;
   }
 
-  if (c->vinit(__ipi) < 0) {
+  if (c->vinit(_ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket init");
     return UdpSocket::ptr();
   }

@@ -1,4 +1,5 @@
-#include <sys/select.h>
+#include "plt/type-inc.h"
+#include "plt/net-inc.h"
 
 #include "ipinfo.h"
 #include "listener.h"
@@ -7,22 +8,23 @@
 #include "utils.h"
 #include "zlog.h"
 
-int SelectReactor::_init(IPInfo &ipi) {
+int SelectReactor::_init(std::shared_ptr<IPInfo> ipi) {
   _ipi = ipi;
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
+
   _listen_i_proc_thread_group_id = PTHREADMANAGER->reserve_thread_group();
   if (_listen_i_proc_thread_group_id < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "reserve_thread_group");
     return -1;
   }
-  PTHREADMANAGER->start(_listen_i_proc_thread_group_id, _ipi._reactor_thread_num);
+  PTHREADMANAGER->start(_listen_i_proc_thread_group_id, _ipi->_reactor_thread_num);
 
   _listen_o_proc_thread_group_id = PTHREADMANAGER->reserve_thread_group();
   if (_listen_o_proc_thread_group_id < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "reserve_thread_group");
     return -1;
   }
-  PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi._io_thread_num);
+  PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi->_io_thread_num);
 
   _stop_flag = false;
 
@@ -35,12 +37,13 @@ void SelectReactor::_stop() {
 }
 
 int SelectReactor::_listen() {
-  for (int i = 0; i < _ipi._reactor_thread_num; ++i) {
+  for (int i = 0; i < _ipi->_reactor_thread_num; ++i) {
     RUN_TASK(_listen_i_proc_thread_group_id,
       MAKE_SHARED(Task, std::bind(&SelectReactor::listen_i_proc, this))
     );
   }
-  for (int i = 0; i < _ipi._io_thread_num; ++i) {
+
+  for (int i = 0; i < _ipi->_io_thread_num; ++i) {
     RUN_TASK(_listen_o_proc_thread_group_id,
       MAKE_SHARED(Task, std::bind(&SelectReactor::listen_o_proc, this))
     );
@@ -55,7 +58,6 @@ void SelectReactor::listen_i_proc() {
   int fd;
   struct timeval tv;
   fd_set _rfds;
-  fd_set _efds;
   MAP_FD_SOCKETID fd_sids;
 
   while ( !_stop_flag ) {
@@ -64,7 +66,8 @@ void SelectReactor::listen_i_proc() {
     tv.tv_usec = 0;
 
     FD_ZERO(&_rfds);
-    FD_ZERO(&_efds);
+
+    LOCK_GUARD_MUTEX_BEGIN(_mutex_select)
 
     LOCK_GUARD_MUTEX_BEGIN(_mutex_fd_sids)
     fd_sids = _fd_sids;
@@ -77,22 +80,19 @@ void SelectReactor::listen_i_proc() {
         maxfd = fd;
       }
       FD_SET(fd, &_rfds);
-      FD_SET(fd, &_efds);
 
       ++tit;
     }
 
-    if (_stop_flag) {
-      return ;
-    }
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, "select");
-    ret = select(maxfd + 1, &_rfds, NULL, &_efds, &tv);
-
+    ret = select(maxfd + 1, &_rfds, NULL, NULL, &tv);
     if (_stop_flag) {
       return ;
     }
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, "aft select", maxfd, ret, errno);
-
+    if (ret == 0) {
+        continue;
+    }
     if (ret < 0) {
       if (errno != EINTR) {
         ZLOG_ERROR(__FILE__, __LINE__, __func__, "select errno", errno);
@@ -104,10 +104,11 @@ void SelectReactor::listen_i_proc() {
     }
 
     if (_line->_main_socket) {//right end has no main_socket
-      if (_line->_main_socket->_stype != EVENT_TYPE_SOCKET_UDP
+      if (_protocol == Reactor::PROTOCOL_TCP
         && (FD_ISSET(_line->_main_socket->_fd, &_rfds))) {
 
         _line->l_accept(_line->_main_socket->_id);
+
         FD_CLR(_line->_main_socket->_fd, &_rfds);
 
         ret--;
@@ -121,21 +122,18 @@ void SelectReactor::listen_i_proc() {
     for (const auto &e: fd_sids) {
       if (FD_ISSET(e.first, &_rfds)) {
         ret = _line->l_recv(e.second);
-        if (ret < 0) {
+        if (ret < 1) {
           _line->l_close(e.second);
         }
         --ret;
       }
 
-      if (FD_ISSET(e.first, &_efds)) {
-        _line->l_close(e.second);
-        --ret;
-      }
-
-      if (ret < 1) {
+      if (ret < 0) {
         break;
       }
     }
+
+    LOCK_GUARD_MUTEX_END
   }
 }
 

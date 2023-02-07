@@ -1,9 +1,8 @@
 #include "listener.h"
 
-#include <sys/socket.h>
+//#include <sys/socket.h>
 #include <sys/types.h>
 
-#include "base_type.h"
 #include "event_type.h"
 #include "socket.h"
 #include "reactor.h"

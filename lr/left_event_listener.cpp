@@ -25,7 +25,7 @@ int LeftEventListener::init() {
     c = PCONFIGURE->get_ci(CONFIGURE_LEFT_END_TCP);
     cnl = STATIC_CAST(ConfigureNetworkLine, c);
 
-    for (IPInfo &ipi: cnl->_lines) {
+    for (IPInfo::ptr &ipi: cnl->_lines) {
       LeftTcpEnd::ptr tcp = MAKE_SHARED(LeftTcpEnd, ipi);
       ret = tcp->init();
       if (ret < 0) {
@@ -33,7 +33,7 @@ int LeftEventListener::init() {
         return -1;
       }
       _tcp_listeners.emplace_back(tcp);
-      ZLOG_INFO(__FILE__, __LINE__, __func__, "tcp init ok", ipi._ip, ipi._port);
+      ZLOG_INFO(__FILE__, __LINE__, __func__, "tcp init ok", ipi->_ip, ipi->_port);
     }
     _tcp_listeners.shrink_to_fit();
 
@@ -46,15 +46,15 @@ int LeftEventListener::init() {
   if (PCONFIGURE->line_enable(CONFIGURE_LEFT_END_WEBSOCKET)) {
     c = PCONFIGURE->get_ci(CONFIGURE_LEFT_END_WEBSOCKET);
     cnl = STATIC_CAST(ConfigureNetworkLine, c);
-    for (IPInfo &ipi: cnl->_lines) {
+    for (IPInfo::ptr &ipi: cnl->_lines) {
       LeftTcpEnd::ptr websocket = MAKE_SHARED(LeftTcpEnd, ipi);
       ret = websocket->init();
       if (ret < 0) {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__, "websocket init", ipi._ip, ipi._port);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__, "websocket init", ipi->_ip, ipi->_port);
         return -1;
       }
       _websocket_listeners.emplace_back(websocket);
-      ZLOG_INFO(__FILE__, __LINE__, __func__, "websocket init ok", ipi._ip, ipi._port);
+      ZLOG_INFO(__FILE__, __LINE__, __func__, "websocket init ok", ipi->_ip, ipi->_port);
     }
     _websocket_listeners.shrink_to_fit();
 
@@ -67,15 +67,15 @@ int LeftEventListener::init() {
     c = PCONFIGURE->get_ci(CONFIGURE_LEFT_END_HTTP);
     cnl = STATIC_CAST(ConfigureNetworkLine, c);
 
-    for (IPInfo &ipi: cnl->_lines) {
+    for (IPInfo::ptr &ipi: cnl->_lines) {
       LeftTcpEnd::ptr http = MAKE_SHARED(LeftTcpEnd, ipi);
       ret = http->init();
       if (ret < 0) {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__, "http init", ipi._ip, ipi._port);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__, "http init", ipi->_ip, ipi->_port);
         return -1;
       }
       _http_listeners.emplace_back(http);
-      ZLOG_INFO(__FILE__, __LINE__, __func__, "http init ok", ipi._ip, ipi._port);
+      ZLOG_INFO(__FILE__, __LINE__, __func__, "http init ok", ipi->_ip, ipi->_port);
     }
     _http_listeners.shrink_to_fit();
 
@@ -88,15 +88,15 @@ int LeftEventListener::init() {
   if (PCONFIGURE->line_enable(CONFIGURE_LEFT_END_UDP)) {
     c = PCONFIGURE->get_ci(CONFIGURE_LEFT_END_UDP);
     cnl = STATIC_CAST(ConfigureNetworkLine, c);
-    for (IPInfo &ipi: cnl->_lines) {
+    for (IPInfo::ptr &ipi: cnl->_lines) {
       LeftUdpEnd::ptr ul = MAKE_SHARED(LeftUdpEnd, ipi);
       ret = ul->init();
       if (ret < 0) {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__,"udp", ipi._ip, ipi._port);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__,"udp", ipi->_ip, ipi->_port);
         return -1;
       }
       _udp_listeners.emplace_back(ul);
-      ZLOG_INFO(__FILE__, __LINE__, __func__, "udp init ok", ipi._ip, ipi._port);
+      ZLOG_INFO(__FILE__, __LINE__, __func__, "udp init ok", ipi->_ip, ipi->_port);
     }
     _udp_listeners.shrink_to_fit();
 

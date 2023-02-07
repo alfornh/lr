@@ -19,6 +19,8 @@ public:
     _stype = EVENT_TYPE_TIMER;
     _stop_flag = false;
     _current_time = 0;
+    _r_event_pool_id = 0;
+    _timer_thread_group_id = 0;
   }
 
   virtual ~Timer() { }
@@ -47,7 +49,6 @@ private:
   int _timer_thread_group_id;
 public:
   int _r_event_pool_id;
-  int _source_type;
 public:
   static std::shared_ptr<Timer> _instance;
 };

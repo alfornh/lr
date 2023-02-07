@@ -65,7 +65,7 @@ public:
   virtual ~ConfigureNetworkLine() {}
 
   int _max_worker_thread_num;
-  std::vector<IPInfo> _lines;
+  std::vector<std::shared_ptr<IPInfo> > _lines;
 };
 
 class ConfigureServerInfo: public ConfigureItem {
@@ -74,6 +74,7 @@ public:
 
   ConfigureServerInfo() {
     _id = CONFIGURE_SERVER_INFO;
+    _max_concurrency = 0;
   }
   virtual ~ConfigureServerInfo() {}
 
@@ -81,7 +82,7 @@ public:
   std::string _server_type;
   std::string _server_name;
   std::string _notes;
-  int _max_concurrency;
+  unsigned long long _max_concurrency;
 };
 
 //class ConfigureSignal: public ConfigureItem {

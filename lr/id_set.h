@@ -5,7 +5,7 @@
 #include <mutex>
 #include <set>
 
-#include "base_type.h"
+#include "plt/type-inc.h"
 
 #define ID_MIN     1
 
@@ -19,6 +19,7 @@ public:
   IDSet() {
     _min = ID_MIN;
     _max = ID_MAX;
+    _current_id = INVALIDID;
   }
 
   //int init();

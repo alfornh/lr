@@ -5,17 +5,19 @@
 #include <string>
 #include <mutex>
 
+#include "plt/type-inc.h"
+
 #include "event.h"
 #include "utils.h"
 #include "data_buffer.h"
 #include "ipinfo.h"
-#include "base_type.h"
+
 
 
 #define CLOSE_FLAG true
 
-#define SEND_TO(es, data, args...)        \
-  std::static_pointer_cast<Socket>(es)->esend(data, ##args)
+#define SEND_TO(es, data, ...)        \
+  std::static_pointer_cast<Socket>(es)->esend(data, ##__VA_ARGS__)
 
 enum {
   SOCKET_STATUS_NULL,
@@ -34,7 +36,7 @@ public:
 
   virtual ~Socket();
 
-  virtual int vinit(IPInfo &);
+  virtual int vinit(std::shared_ptr<IPInfo> );
   virtual int vbind();
   virtual std::shared_ptr<Socket> vaccept();
   virtual int vconnect();
@@ -93,7 +95,7 @@ public:
   std::mutex _mutex_r_fd;
   std::mutex _mutex_w_fd;
 
-  IPInfo _ipi;
+  std::shared_ptr<IPInfo> _ipi;
   int _socket_status;
 
   int _time_stamp;

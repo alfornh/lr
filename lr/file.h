@@ -1,6 +1,8 @@
 #ifndef _FILE_H__
 #define _FILE_H__
 
+#include <stdio.h>
+
 #include <string>
 #include <memory>
 
@@ -26,7 +28,7 @@ public:
   int read(char *buf, int len);
   int readline(char *buf, int len);
   int write(const char *buf, const int len);
-  int write(const std::string msg);
+  int write(const std::string &msg);
 
   int size();
 
@@ -34,14 +36,14 @@ public:
 
 public:
   std::string _name;
-  int _fd;
+  FILE *_file;
+  //int _fd;
   int _size;
 
 public:
   //enum {
   //  errno_null   = 0x00,
   //  errno_nofile = 0x01,
-  //  errno_
   //};
 };
 

@@ -1,16 +1,19 @@
 #ifndef _Z_LOG_H__
 #define _Z_LOG_H__
 
-#include <pthread.h>
-#include <time.h>
-
-#include <condition_variable>
-#include <fstream>
+//#include <condition_variable>
 #include <iostream>
-#include <list>
+//#include <list>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
+
+#include "plt/oth-inc.h"
+
+#define DEFAULT_LOG_PATH "logs/"
+#define DEFAULT_LOG_FILE_PREFIX "lr"
+#define DEFAULT_ROTATE_SIZE 4 * 1024 * 1024
 
 #define PZLOG ZLog::_instance
 
@@ -24,16 +27,16 @@ public:
     _sections = s;
     _level = l;
     _msg = m;
-    _tid = pthread_self();
+    _tid = get_thread_id();
     _time = time(0);
   }
 
   std::string to_string();
 
-  int _time;
+  TIME_T _time;
   int _level;
   int _sections;
-  pthread_t _tid;
+  THREADID _tid;
   std::string _msg;
 };
 
@@ -56,12 +59,18 @@ enum log_section {
   sthread_id   = 0x02,
   slevel       = 0x04,
   smessage     = 0x08,
+  sall         = 0xFF,
 };
 
 public:
   typedef std::shared_ptr<ZLog> ptr;
 
-  ZLog() {}
+  ZLog() {
+    _level = log_level::info;
+    _sinks = log_sink::terminal;
+    _sections = log_section::sall;
+    _rotate_size = DEFAULT_ROTATE_SIZE;
+  }
   ~ZLog();
 
   int init();
@@ -108,9 +117,9 @@ public:
   int _sections;
   int _rotate_size;
 
-  std::list<std::shared_ptr<Record> > _records;
+  //std::list<std::shared_ptr<Record> > _records;
   std::mutex _mutex_records;
-  std::condition_variable _cv_records;
+  //std::condition_variable _cv_records;
 
   //bool _stop_flag;
 
@@ -119,10 +128,10 @@ public:
   static std::shared_ptr<ZLog> _instance;
 };
 
-#define ZLOG_DEBUG(args...) ZLOG(ZLog::log_level::debug, args)
-#define ZLOG_INFO(args...)  ZLOG(ZLog::log_level::info,  args)
-#define ZLOG_WARN(args...)  ZLOG(ZLog::log_level::warn,  args)
-#define ZLOG_ERROR(args...) ZLOG(ZLog::log_level::error, args)
+#define ZLOG_DEBUG(...) ZLOG(ZLog::log_level::debug, ##__VA_ARGS__)
+#define ZLOG_INFO(...)  ZLOG(ZLog::log_level::info,  ##__VA_ARGS__)
+#define ZLOG_WARN(...)  ZLOG(ZLog::log_level::warn,  ##__VA_ARGS__)
+#define ZLOG_ERROR(...) ZLOG(ZLog::log_level::error, ##__VA_ARGS__)
 
 inline std::string v_to_string(const char * const a) {
   return std::string(a);

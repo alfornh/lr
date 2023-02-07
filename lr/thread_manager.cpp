@@ -1,6 +1,7 @@
 #include "thread_manager.h"
 
-#include "base_type.h"
+#include "plt/type-inc.h"
+
 #include "configure.h"
 #include "event_type.h"
 

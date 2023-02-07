@@ -54,7 +54,7 @@ int LeftWebSocketHandler::echo(std::shared_ptr<Socket> sock) {
   db->move(head, sizeof(head) - 1);
   ZLOG_DEBUG(__FILE__, __LINE__, __func__, "head", head);
   char echo[128];
-  sprintf(echo, "%s %d %d:%s", sock->_line->__ipi._ip.c_str(), sock->_line->__ipi._port, sock->_id, head);
+  sprintf(echo, "%s %d %d:%s", sock->_line->_ipi->_ip.c_str(), sock->_line->_ipi->_port, sock->_id, head);
   db->set(echo, strlen(echo));
 
   _encode_data(db);
@@ -62,12 +62,14 @@ int LeftWebSocketHandler::echo(std::shared_ptr<Socket> sock) {
   return SEND_TO(sock, db);
 }
 
-
 int LeftWebSocketHandler::_handshak(std::shared_ptr<Socket> &socket) {
   char method[16] = {0};
   std::vector<char> data;
   //Socket::ptr s = STATIC_CAST(Socket, ev->_es);
   socket->move_r_data(data);
+  if (data.size() < 1) {
+    return -1;
+  }
   char *beg = &(*data.begin());
 
   while ( *beg == ' ' ) {

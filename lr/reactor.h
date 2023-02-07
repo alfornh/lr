@@ -12,20 +12,29 @@
 
 #define EPOLL_WAIT_EVENTS 16
 
-enum {
-  REACTOR_NULL,
-  REACTOR_EPOLL,
-  REACTOR_SELECT,
-};
+
 
 class Listener;
 class Reactor {
 public:
-  Reactor() { }
+  enum {
+    PROTOCOL_NULL, PROTOCOL_TCP, PROTOCOL_UDP
+  };
+  enum {
+    REACTOR_NULL, REACTOR_ASYNC, REACTOR_SELECT
+  };
+public:
+  Reactor() {
+    _name = REACTOR_NULL;
+    _listen_i_proc_thread_group_id = 0;
+    _listen_o_proc_thread_group_id = 0;
+    _stop_flag = false;
+    _protocol = PROTOCOL_NULL;
+  }
 
   virtual ~Reactor() {}
 
-  virtual int _init(IPInfo &) { return 0; }
+  virtual int _init(std::shared_ptr<IPInfo> ) { return 0; }
   virtual int _listen() { return 0; }
 
   virtual int _add(SOCKETID sid, int fd) { return 0; }
@@ -42,14 +51,16 @@ public:
 public:
   int _listen_i_proc_thread_group_id;
   int _listen_o_proc_thread_group_id;
-  IPInfo _ipi;
+  std::shared_ptr<IPInfo> _ipi;
   std::shared_ptr<Listener> _line;
   bool _stop_flag;
+  int _name;
 
 public:
   std::list<SOCKETID> _o_sockets;
   std::mutex _mutex_o_sockets;
   std::condition_variable _cv_o_sockets;
+  int _protocol;
 };
 
 #endif //_REACTOR_H__

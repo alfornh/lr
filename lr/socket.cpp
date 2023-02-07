@@ -1,13 +1,14 @@
 #include "socket.h"
 
 #include <fcntl.h>
-#include <sys/socket.h>
+//#include <sys/socket.h>
 #include <sys/types.h>
 #include <string>
-#include <unistd.h>
+//#include <unistd.h>
+
+#include "plt/net-inc.h"
 
 #include "data_buffer.h"
-#include "base_type.h"
 #include "id_set.h"
 #include "zlog.h"
 #include "utils.h"
@@ -16,17 +17,19 @@
 #include "listener.h"
 
 Socket::Socket() {
-  _r_db = MAKE_SHARED(DataBuffer);
-  _w_db = MAKE_SHARED(DataBuffer);
   _socket_status = SOCKET_STATUS_NULL;
   _fd = 0;
   _id = INVALIDID;
+  _ipi = MAKE_SHARED(IPInfo);
+  _r_db = MAKE_SHARED(DataBuffer);
+  _w_db = MAKE_SHARED(DataBuffer);
 }
 
 Socket::~Socket() {
   _socket_status = SOCKET_STATUS_CLOSE;
   if (_fd > 0) {
-    close(_fd);
+    //close(_fd);
+    socket_close(_fd);
     _fd = 0;
   }
   PSIDSET->put(_id);
@@ -51,7 +54,7 @@ SOCKETID Socket::sign_socket_id() {
   //return id;
 }
 
-int Socket::vinit(IPInfo &) { return 0; }
+int Socket::vinit(std::shared_ptr<IPInfo> ) { return 0; }
 int Socket::vbind() { return 0; }
 std::shared_ptr<Socket> Socket::vaccept() { return NULL; }
 int Socket::vconnect() { return 0; }
@@ -61,33 +64,11 @@ int Socket::vsend(const char *buf, const int blen) { return 0; }
 int Socket::vclose() { return 0;}
 
 int Socket::nonblock(bool nb) {
-  int fl = fcntl(_fd, F_GETFL, 0);
-  if ( fl < 0 ) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "fcntl error", _fd);
-    return -1;
-  }
-
-  if (nb) {
-    fl |= O_NONBLOCK;
-  } else {
-    fl &= ~O_NONBLOCK;
-  }
-
-  if (fcntl(_fd, F_SETFL, fl) < 0) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "fcntl set error", _fd, fl);
-    return -1;
-  }
-
-  return 0;
+  return socket_nonblock(_fd, nb);
 }
 
 int Socket::reuseaddr(bool ra) {
-  int on = 1;
-  if ( ra == false) {
-    on = 0;
-  }
-
-  return setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+  return socket_reuse(_fd, ra);
 }
 
 int Socket::ssend() {

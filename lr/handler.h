@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "base_type.h"
+#include "plt/type-inc.h"
 #include "event_type.h"
 
 class Event;

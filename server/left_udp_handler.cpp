@@ -13,7 +13,7 @@ int LeftUdpHandler::handle(EVENTID id, std::shared_ptr<Event> event) {
   ZLOG_INFO(__FILE__, __LINE__, __func__, "req: ", req); 
 
   char res[512] = {0};
-  sprintf(res, "%s:%d %s", socket->_line->_main_socket->_ipi._ip.c_str(), socket->_line->_main_socket->_ipi._port, req);
+  sprintf(res, "%s:%d %s", socket->_line->_main_socket->_ipi->_ip.c_str(), socket->_line->_main_socket->_ipi->_port, req);
   SEND_TO(event->_es, res, strlen(res));
   return 0;
 }

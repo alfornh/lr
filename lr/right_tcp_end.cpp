@@ -2,11 +2,12 @@
 
 #include <string>
 
+#include "plt/net-inc.h"
+
 #include "configure.h"
 #include "event.h"
 #include "event_pool.h"
 #include "reactor.h"
-#include "reactor_epoll.h"
 #include "reactor_select.h"
 #include "tcp_socket.h"
 #include "udp_socket.h"
@@ -21,7 +22,7 @@
 int RightTcpEnd::init() {
   _stop_flag = false;
 
-  switch (__ipi._protocal) {
+  switch (_ipi->_protocal) {
   case PROTOCAL_TCP:
     //_main_socket = MAKE_SHARED(TcpSocket, EVENT_TYPE_SOCKET_TCP);
     _stype = EVENT_TYPE_SOCKET_TCP;
@@ -37,16 +38,15 @@ int RightTcpEnd::init() {
   //_main_socket->_id = Socket::sign_socket_id();
   //_main_socket->_line = shared_from_this();
 
-  Value::ptr v = PCONFIGURE->get_value("right_reactor");
-  if (v && v->_v == "epoll") {
-    _reactor = MAKE_SHARED(EpollReactor);
+  if (PCONFIGURE->is_key_equal_value("right_reactor", "async")) {
+    _reactor = MAKE_SHARED(AsyncIOMultiplex, Reactor::PROTOCOL_TCP);
   } else {
-    _reactor = MAKE_SHARED(SelectReactor);
+    _reactor = MAKE_SHARED(SelectReactor, Reactor::PROTOCOL_TCP);
   }
 
   _reactor->_line = shared_from_this();
 
-  if (_reactor->_init(__ipi) < 0) {
+  if (_reactor->_init(_ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "_reactor init");
     return -1;
   }
@@ -95,6 +95,37 @@ int RightTcpEnd::l_recv(SOCKETID sid) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket recv");
     return ret;
   }
+
+  Event::ptr event = MAKE_SHARED(Event);
+  event->_es = socket;
+  event->_stype = _stype | EVENT_SUBTYPE_READ;
+
+  ADD_EVENT(_r_event_pool_id, event);
+
+  return ret;
+}
+
+int RightTcpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi){
+  ZLOG_DEBUG(__FILE__, __LINE__, __func__);
+  Socket::ptr socket = Socket::ptr();
+
+  LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
+  SocketContainer::iterator it = _sockets.find(sid);
+  if ( it == _sockets.end() ) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket not found", sid);
+    return -1;
+  }
+
+  socket = it->second;
+  if (!socket || socket->_socket_status == SOCKET_STATUS_CLOSE) {
+    _sockets.erase(it);
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket closed", sid);
+    return -1;
+  }
+
+  LOCK_GUARD_MUTEX_END
+
+  int ret = socket->add_r_data(bi);
 
   Event::ptr event = MAKE_SHARED(Event);
   event->_es = socket;
@@ -172,7 +203,7 @@ std::shared_ptr<Socket> RightTcpEnd::make_right() {
     return Socket::ptr();
   }
 
-  if (c->vinit(__ipi) < 0) {
+  if (c->vinit(_ipi) < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket init");
     return Socket::ptr();
   }

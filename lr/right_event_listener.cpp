@@ -28,18 +28,18 @@ int RightEventListener::init() {
   if (PCONFIGURE->line_enable(CONFIGURE_RIGHT_END_TCP)) {
     ci = PCONFIGURE->get_ci(CONFIGURE_RIGHT_END_TCP);
     cnl = STATIC_CAST(ConfigureNetworkLine, ci);
-    for (IPInfo &ipi: cnl->_lines) {
+    for (IPInfo::ptr &ipi: cnl->_lines) {
       RightTcpEnd::ptr re = MAKE_SHARED(RightTcpEnd, ipi);
       ret = re->init();
       if (ret < 0) {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__, "right end init", ipi._protocal, ipi._ip, ipi._port);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__, "right end init", ipi->_protocal, ipi->_ip, ipi->_port);
         continue;
       }
 
-      if (ipi._protocal == PROTOCAL_TCP) {
+      if (ipi->_protocal == PROTOCAL_TCP) {
         _tcp_listeners.emplace_back(re);
       } else {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__, "unkndown protocal", ipi._protocal);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__, "unkndown protocal", ipi->_protocal);
       }
     }
   } else {
@@ -49,18 +49,18 @@ int RightEventListener::init() {
   if (PCONFIGURE->line_enable(CONFIGURE_RIGHT_END_UDP)) {
     ci = PCONFIGURE->get_ci(CONFIGURE_RIGHT_END_UDP);
     cnl = STATIC_CAST(ConfigureNetworkLine, ci);
-    for (IPInfo &ipi: cnl->_lines) {
+    for (IPInfo::ptr &ipi: cnl->_lines) {
       RightUdpEnd::ptr re = MAKE_SHARED(RightUdpEnd, ipi);
       ret = re->init();
       if (ret < 0) {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__, "right end init", ipi._protocal, ipi._ip, ipi._port);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__, "right end init", ipi->_protocal, ipi->_ip, ipi->_port);
         continue;
       }
 
-      if (ipi._protocal == PROTOCAL_UDP) {
+      if (ipi->_protocal == PROTOCAL_UDP) {
         _udp_listeners.emplace_back(re);
       } else {
-        ZLOG_ERROR(__FILE__, __LINE__, __func__, "unkndown protocal", ipi._protocal);
+        ZLOG_ERROR(__FILE__, __LINE__, __func__, "unkndown protocal", ipi->_protocal);
       }
     }
   } else {

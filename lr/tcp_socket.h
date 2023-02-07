@@ -15,7 +15,7 @@ public:
   virtual ~TcpSocket() { }
 
 public:
-  virtual int vinit(IPInfo &);
+  virtual int vinit(std::shared_ptr<IPInfo> );
   virtual std::shared_ptr<Socket> vaccept();
   virtual int vbind();
   virtual int vconnect();

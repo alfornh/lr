@@ -5,9 +5,10 @@
 #include <mutex>
 #include <unordered_map>
 
+#include "plt/type-inc.h"
+
 #include "ipinfo.h"
 #include "listener.h"
-#include "base_type.h"
 #include "reactor.h"
 #include "socket.h"
 
@@ -17,7 +18,7 @@ class RightTcpEnd: public Listener, public std::enable_shared_from_this<RightTcp
 public:
   typedef std::shared_ptr<RightTcpEnd> ptr;
 
-  RightTcpEnd(IPInfo &ipi) { __ipi = ipi; }
+  RightTcpEnd(std::shared_ptr<IPInfo> ipi) { _ipi = ipi; }
   virtual ~RightTcpEnd() { }
 
   virtual int init();
@@ -26,6 +27,7 @@ public:
   virtual int stop();
 
   virtual int l_recv(SOCKETID sid);
+  virtual int l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi);
   virtual int l_write(SOCKETID sid);
   virtual int l_close(SOCKETID sid);
 

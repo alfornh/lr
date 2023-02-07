@@ -1,6 +1,7 @@
 #ifndef _UTILS_H__
 #define _UTILS_H__
 
+#include <memory.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -8,7 +9,7 @@
 #define LOCK_GUARD_MUTEX_BEGIN(lock) { std::lock_guard<std::mutex> palgfu(lock);
 #define LOCK_GUARD_MUTEX_END         };
 
-#define MAKE_SHARED(c, args...) std::make_shared< c >( args )
+#define MAKE_SHARED(c, ...)  std::make_shared< c >( __VA_ARGS__ )
 
 #define DYNAMIC_CAST(c,  sp) std::dynamic_pointer_cast< c >( sp )
 
@@ -30,5 +31,9 @@ const char * extract_section_from_str(const char *str, char *word, int wlen, con
 
 int SECKEY_SHA1(const char *data, int dlen, char *res);
 char *ZBASE64(const char *data, int dlen, char *res);
+
+inline void memzero(void *mem, unsigned int len) {
+  memset(mem, 0x0, len);
+}
 
 #endif//_UTILS_H__
