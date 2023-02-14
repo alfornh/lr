@@ -250,11 +250,7 @@ int socket_bind(int socket, void *param) {
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(sbp->ip);
   addrin.sin_port = htons(sbp->port);
-  if ( 0 != ::bind(socket, (struct sockaddr *)&addrin, sizeof(addrin)) ) {
-    return -1;
-  }
-
-  return 0;
+  return ::bind(socket, (struct sockaddr *)&addrin, sizeof(addrin));
 }
 
 int socket_connect(int socket, void *param) {
@@ -266,11 +262,7 @@ int socket_connect(int socket, void *param) {
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(scp->ip);
   addrin.sin_port = htons(scp->port);
-  if ( 0 != ::connect(socket, (struct sockaddr *)&addrin, sizeof(addrin)) ) {
-    return -1;
-  }
-
-  return 0;
+  return ::connect(socket, (struct sockaddr *)&addrin, sizeof(addrin));
 }
 
 int socket_accept(int socket, void *param) {
@@ -301,25 +293,11 @@ int socket_listen(int socket, void *param) {
   if ( !param ) {
     return -1;
   }
-  if ( 0 != ::listen(socket, ((struct socket_listen_param *)param)->number)) {
-    return -1;
-  }
-  return 0;
+  return ::listen(socket, ((struct socket_listen_param *)param)->number);
 }
 
 int _tcp_socket_recv(int socket, struct socket_recv_param *srp) {
-  int ret;
-  while ( true ) {
-    ret = ::recv(socket, srp->buf, srp->blen, 0);
-    if ( ret < 0 ) {
-      if ( errno == EINTR ) {
-        continue;
-      }
-      return -1;
-    }
-    break;
-  }
-  return ret;
+  return ::recv(socket, srp->buf, srp->blen, 0);
 }
 
 int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
@@ -328,18 +306,7 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(srp->ip);
   addrin.sin_port = htons(srp->port);
-  int ret;
-  while ( true ) {
-    ret = ::recvfrom(socket, srp->buf, srp->blen, 0, (struct sockaddr*)&addrin, &addrlen);
-    if ( ret < 0 ) {
-      if ( errno == EINTR ) {
-        continue;
-      }
-      return -1;
-    }
-    break;
-  }
-  return ret;
+  return ::recvfrom(socket, srp->buf, srp->blen, 0, (struct sockaddr*)&addrin, &addrlen);
 }
 
 int socket_recv(int socket, void *param) {
@@ -361,18 +328,7 @@ int socket_recv(int socket, void *param) {
 }
 
 int _tcp_socket_send(int socket, struct socket_send_param *ssp) {
-  int ret;
-  while ( true ) {
-    ret = ::send(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL);
-    if ( ret < 0 ) {
-      if (errno == EINTR) {
-        continue;
-      }
-      return -1;
-    }
-    break;
-  }
-  return ret;
+  return ::send(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL);
 }
 
 int _udp_socket_send(int socket, struct socket_send_param *ssp) {
@@ -380,18 +336,7 @@ int _udp_socket_send(int socket, struct socket_send_param *ssp) {
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(ssp->ip);
   addrin.sin_port = htons(ssp->port);
-  int ret;
-  while ( true ) {
-    ret = ::sendto(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL, (struct sockaddr*)&addrin, sizeof(addrin));
-    if ( ret < 0 ) {
-      if (errno == EINTR) {
-        continue;
-      }
-      return -1;
-    }
-    break;
-  }
-  return ret;
+  return ::sendto(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL, (struct sockaddr*)&addrin, sizeof(addrin));
 }
 
 
