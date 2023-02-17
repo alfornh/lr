@@ -25,7 +25,7 @@ AsyncIOMultiplex::~AsyncIOMultiplex() {
   //_handler = NULL;
 }
 
-int AsyncIOMultiplex::_init(IPInfo &ipi) {
+int AsyncIOMultiplex::_init(std::shared_ptr<IPInfo> ipi) {
   _ipi = ipi;
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
 
@@ -40,14 +40,14 @@ int AsyncIOMultiplex::_init(IPInfo &ipi) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "reserve_thread_group");
     return -1;
   }
-  PTHREADMANAGER->start(_listen_i_proc_thread_group_id, _ipi._reactor_thread_num);
+  PTHREADMANAGER->start(_listen_i_proc_thread_group_id, _ipi->_reactor_thread_num);
 
   _listen_o_proc_thread_group_id = PTHREADMANAGER->reserve_thread_group();
   if (_listen_o_proc_thread_group_id < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "reserve_thread_group");
     return -1;
   }
-  PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi._io_thread_num);
+  PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi->_io_thread_num);
 
   _stop_flag = false;
 
@@ -60,12 +60,12 @@ void AsyncIOMultiplex::_stop() {
 }
 
 int AsyncIOMultiplex::_listen() {
-  for (int i = 0; i < _ipi._reactor_thread_num; ++i) {
+  for (int i = 0; i < _ipi->_reactor_thread_num; ++i) {
     RUN_TASK(_listen_i_proc_thread_group_id,
       MAKE_SHARED(Task, std::bind(&AsyncIOMultiplex::listen_i_proc, this))
     );
   }
-  for (int i = 0; i < _ipi._io_thread_num; ++i) {
+  for (int i = 0; i < _ipi->_io_thread_num; ++i) {
     RUN_TASK(_listen_o_proc_thread_group_id,
       MAKE_SHARED(Task, std::bind(&AsyncIOMultiplex::listen_o_proc, this))
     );

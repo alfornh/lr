@@ -5,9 +5,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define LOCK_GUARD_MUTEX(lock)       std::lock_guard<std::mutex> solgfu(lock);
-#define LOCK_GUARD_MUTEX_BEGIN(lock) { std::lock_guard<std::mutex> palgfu(lock);
-#define LOCK_GUARD_MUTEX_END         };
+#define LOCK_GUARD_MUTEX(lock)         std::lock_guard<std::mutex> solgfu(lock);
+#define LOCK_GUARD_MUTEX_BEGIN(lock)  {std::lock_guard<std::mutex> palgfu(lock);
+#define LOCK_GUARD_MUTEX_END          };
 
 #define MAKE_SHARED(c, ...)  std::make_shared< c >( __VA_ARGS__ )
 

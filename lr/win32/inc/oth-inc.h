@@ -23,7 +23,7 @@ extern "C" {
 #define SIGBREAK       21  // Ctrl-Break sequence
 #define SIGABRT        22  // abnormal termination triggered by abort call
 
-int get_thread_id();
+THREADID get_thread_id();
 
 void set_signal_handler(int sig, SignalHandler sh);
 

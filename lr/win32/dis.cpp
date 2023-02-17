@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <io.h>
 
+extern "C" {
 
 bool zfexist(const char *path) {
   int ret = _access(path, 00);
@@ -15,3 +16,4 @@ int zmkdir(const char *path) {
   return _mkdir(path);
 }
 
+}

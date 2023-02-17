@@ -23,7 +23,6 @@ inline bool is_host_big_endian() {
   return false;
 
   /*
-  uint16_t v = 0xABCD;
   if (v == htons(v)) {
     return true;
   }
@@ -89,7 +88,7 @@ uint64_t hton64(uint64_t u64) {
   return (u64_ << 32) | hton32(u64_h);
 }
 
-inline bool isspace(const char c) {
+bool isspace(const char c) {
   return (c == ' ') || (c == '\t') || (c == '\n');
 }
 

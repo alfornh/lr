@@ -43,20 +43,9 @@ file(COPY ${PLATFORM_INC} DESTINATION ${PROJECT_SOURCE_DIR}/lr/plt)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 
-
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+add_definitions(-std=c++11)
 
 add_definitions("-Wall -g")
-
-if(COMPILER_SUPPORTS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-  message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER} does not support c++11.")
-endif()
 
 set(lr_VERSION_MAJOR 1)
 set(lr_VERSION_MINOR 0)
