@@ -1,6 +1,8 @@
 #ifndef _OTH_INC_H__
 #define _OTH_INC_H__
 
+#include <unistd.h>
+
 #include "type-inc.h"
 
 extern "C" {

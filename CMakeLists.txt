@@ -44,8 +44,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 
 add_definitions(-std=c++11)
-
-add_definitions("-Wall -g")
+add_definitions(-Wall)
+add_definitions(-g)
 
 set(lr_VERSION_MAJOR 1)
 set(lr_VERSION_MINOR 0)
@@ -59,7 +59,6 @@ configure_file(
  ${PROJECT_SOURCE_DIR}/lr/lr.conf
  ${PROJECT_SOURCE_DIR}/gate/lr.conf
 )
-
 
 include_directories(
   ${PROJECT_SOURCE_DIR}/lr

@@ -3,7 +3,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <unistd.h>
 
 #include "plt/oth-inc.h"
 
