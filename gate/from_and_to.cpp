@@ -71,7 +71,7 @@ std::shared_ptr<Socket> FromAndTo::make_udp_right(std::shared_ptr<Socket> left) 
     return s;
   }
 
-  int index = random() % len;
+  int index = rand() % len;
   s = udpends[index]->make_right();
   if (s) {
     return s;
