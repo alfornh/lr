@@ -10,8 +10,6 @@
 
 typedef std::string Key;
 
-#define MAX_CONFIGURE_SIZE_IN_BYTES 1024 * 1024 * 10
-
 #define PCONFIGURE Configure::_instance
 
 class Value {

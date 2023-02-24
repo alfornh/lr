@@ -94,9 +94,10 @@ int Socket::ssend() {
 
   _w_db->drop(len);
 
-  LOCK_GUARD_MUTEX_END
+  //return the number of remained bytes
+  return _w_db->_len;
 
-  return len;
+  LOCK_GUARD_MUTEX_END
 }
 
 int Socket::esend(int cflag) {

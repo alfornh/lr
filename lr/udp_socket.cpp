@@ -1,11 +1,7 @@
 #include "udp_socket.h"
 
-//#include <arpa/inet.h>
 #include <errno.h>
-//#include <netinet/in.h>
 #include <sys/types.h>
-//#include <sys/socket.h>
-//#include <unistd.h>
 
 #include "plt/net-inc.h"
 
@@ -27,7 +23,6 @@ UdpSocket::UdpSocket(EVENTID mtype) {
 int UdpSocket::vinit(std::shared_ptr<IPInfo> ipi) {
   struct socket_create_param scp;
   _ipi = ipi;
-  //_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
   memzero(&scp, sizeof(scp));
   scp.protocol = Reactor::PROTOCOL_UDP;
 
@@ -48,18 +43,7 @@ int UdpSocket::vbind() {
   sbp.port = _ipi->_port;
   strncpy(sbp.ip, _ipi->_ip.c_str(), _ipi->_ip.size());
 
-  //struct sockaddr_in addr;
-  //memset(&addr, 0x0, sizeof(addr));
-  //addr.sin_family = AF_INET;
-  //addr.sin_port  = hton16(_ipi._port);
-  //if (_stype == EVENT_TYPE_CLIENT_SOCKET_UDP) {
-  //  addr.sin_addr.s_addr = inet_addr(_ipi._ip.c_str());
-  //} else {
-  //  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  //}
-
   int ret = socket_bind(_fd, &sbp);
-  //int ret = ::bind(this->_fd, (struct sockaddr *)&addr, sizeof(addr));
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "bind with", _fd, _ipi->_ip, _ipi->_port);
     return -1;
@@ -84,14 +68,6 @@ int UdpSocket::vsend(const char *buf, const int blen) {
 
   int sent = 0;
   int ret;
-  //struct sockaddr_in addr;
-  //socklen_t socklen = sizeof(addr);
-  //
-  //
-  //memset(&addr, 0x0, sizeof(addr));
-  //addr.sin_family = AF_INET;
-  //addr.sin_port  = hton16(_ipi._port);
-  //addr.sin_addr.s_addr = inet_addr(_ipi._ip.c_str());
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_w_fd)
 
@@ -99,16 +75,6 @@ int UdpSocket::vsend(const char *buf, const int blen) {
     ssp.buf = (char *)buf + sent;
     ssp.blen = blen - sent;
     ret = socket_send(_fd, &ssp);
-    //ret = ::sendto(_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
-    //if (ret < 0) {
-    //  if (errno == EINTR) {
-    //    ZLOG_WARN(__FILE__, __LINE__, __func__, "EINTR");
-    //    continue;
-    //  }
-	//
-    //  ZLOG_ERROR(__FILE__, __LINE__, __func__, "sendto errno", errno);
-    //  break;
-    //}
     if (ret < 0) {
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_send");
       break;
@@ -140,22 +106,11 @@ int UdpSocket::vrecv() {
 
   int ret;
   int recv = 0;
-  //struct sockaddr_in addr;
-  //memset(&addr, 0x0, sizeof(addr));
-  //socklen_t socklen = sizeof(addr);
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_r_fd)
   do {
     ret = socket_recv(_fd, &srp);
-    //ret = ::recvfrom(_fd, bi->_buffer + bi->_len, bi->available(), 0, (struct sockaddr *)&addr, &socklen);
     if (ret < 0) {
-      //if (errno == EINTR) {
-      //  ZLOG_WARN(__FILE__, __LINE__, __func__, "recvfrom EINTR");
-      //  continue;
-      //}
-
-      //ZLOG_ERROR(__FILE__, __LINE__, __func__, "recvfrom error", errno);
-      //return -1;
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_recv");
       break;
     }
@@ -194,23 +149,11 @@ std::shared_ptr<UdpSocket> UdpSocket::lrecv() {
 
   int ret;
   int recv = 0;
-  //struct sockaddr_in addr;
-  //memset(&addr, 0x0, sizeof(addr));
-  //
-  //socklen_t socklen = sizeof(addr);
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_r_fd)
   do {
     ret = socket_recv(_fd, &srp);
-    //ret = ::recvfrom(_fd, bi->_buffer + bi->_len, bi->available(), 0, (struct sockaddr *)&addr, &socklen);
     if (ret < 0) {
-    //  if (errno == EINTR) {
-    //    ZLOG_WARN(__FILE__, __LINE__, __func__, "recvfrom EINTR");
-    //    continue;
-    //  }
-	//
-    //  ZLOG_ERROR(__FILE__, __LINE__, __func__, "recvfrom error", errno);
-    //  return NULL;
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_recv");
       break;
     }
@@ -253,20 +196,13 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
 
   int sent = 0;
   int ret;
-  //struct sockaddr_in addr;
   int blen = socket->_w_db->_len;
   char *buf;
   std::vector<char> d;
-  //socklen_t socklen = sizeof(addr);
 
   if (blen < 1) {
     return 0;
   }
-
-  //memset(&addr, 0x0, sizeof(addr));
-  //addr.sin_family = AF_INET;
-  //addr.sin_port  = hton16(socket->_ipi._port);
-  //addr.sin_addr.s_addr = inet_addr(socket->_ipi._ip.c_str());
 
   if (socket->_w_db->_data.size() == 1) {
     BufferItem::ptr bi = socket->_w_db->_data.front();
@@ -281,15 +217,7 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
     ssp.buf = buf + sent;
     ssp.blen = blen - sent;
     ret = socket_send(_line->_main_socket->_fd, &ssp);
-    //ret = ::sendto(_line->_main_socket->_fd, buf + sent, blen - sent, MSG_NOSIGNAL, (struct sockaddr *)&addr, socklen);
     if (ret < 0) {
-      //if (errno == EINTR) {
-      //  ZLOG_WARN(__FILE__, __LINE__, __func__, "EINTR");
-      //  continue;
-      //}
-
-      //ZLOG_ERROR(__FILE__, __LINE__, __func__, "sendto errno", errno);
-
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_send");
       break;
     }
@@ -307,7 +235,8 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
   } while ( true );
   LOCK_GUARD_MUTEX_END
 
-  return sent;
+  return 0;
+  //return blen - sent;
 }
 
 int UdpSocket::vclose() {

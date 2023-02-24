@@ -32,19 +32,13 @@ int TcpSocket::vinit(std::shared_ptr<IPInfo> ipi) {
 }
 
 std::shared_ptr<Socket> TcpSocket::vaccept() {
-  //struct sockaddr_in addr;
   struct socket_accept_param sap;
   memzero(&sap, sizeof(sap));
-  //memset(&addr, 0x0, sizeof(addr));
-  //socklen_t socklen = sizeof(addr);
   TcpSocket::ptr sock = MAKE_SHARED(TcpSocket, _stype);
   sock->_id = Socket::sign_socket_id();
   sock->_line = _line;//DYNAMIC_CAST(EventSource, sock);
-  //sock->_r_event_pool_id = _r_event_pool_id;
-  //sock->_w_event_pool_id = _w_event_pool_id;
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_a_fd)
-  //sock->_fd = ::accept(_fd, (struct sockaddr *)&addr, &socklen);
   sock->_fd = socket_accept(_fd, &sap);
   if (sock->_fd < 0) {
     ZLOG_WARN(__FILE__, __LINE__, __func__, "accept errno", errno);
@@ -70,12 +64,6 @@ int TcpSocket::vbind() {
   strcpy(sbp.ip, _ipi->_ip.c_str());
   sbp.port = _ipi->_port;
 
-  //struct sockaddr_in addr;
-  //memset(&addr, 0x0, sizeof(addr));
-  //addr.sin_family = AF_INET;
-  //addr.sin_port  = hton16(_ipi._port);
-  //addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  //int ret = ::bind(_fd, (struct sockaddr *)&addr, sizeof(addr));
   int ret = socket_bind(_fd, &sbp);
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "bind with", _fd, _ipi->_ip, _ipi->_port);
@@ -92,15 +80,6 @@ int TcpSocket::vconnect() {
   strncpy(scp.ip, _ipi->_ip.c_str(), _ipi->_ip.size());
   scp.port = _ipi->_port;
 
-  //struct sockaddr_in server;
-  //
-  //memset(&server, 0x0, sizeof(server));
-  //
-  //server.sin_family = AF_INET;
-  //server.sin_port   = hton16(_ipi._port);
-  //server.sin_addr.s_addr = inet_addr(_ipi._ip.c_str());
-  //
-  //int ret = ::connect(_fd, (struct sockaddr *) &server, sizeof(server));
   int ret = socket_connect(_fd, &scp);
   if (ret < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, _fd, _ipi->_ip, _ipi->_port, errno);
@@ -117,7 +96,6 @@ int TcpSocket::vconnect() {
 int TcpSocket::vlisten() {
   struct socket_listen_param slp;
   slp.number = 10;
-  //int ret = ::listen(_fd, 65535);
   int ret = socket_listen(_fd, &slp);
   if ( ret < 0 ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "listen with fd", _fd);
@@ -147,7 +125,6 @@ int TcpSocket::vrecv() {
     }
 
     if (ret == 0) {
-      //ZLOG_WARN(__FILE__, __LINE__, __func__, "peer closed");
       return -1;
     }
 
@@ -181,14 +158,8 @@ int TcpSocket::vsend(const char *buf, const int blen) {
   while (sent < blen && (_socket_status == SOCKET_STATUS_ACTIVE || _socket_status == SOCKET_STATUS_WEBSOCKET_ACTIVE)) {
     ssp.buf = (char *)buf + sent;
     ssp.blen = blen - sent;
-    //ret = ::send(_fd, buf + sent, blen - sent, MSG_NOSIGNAL);
     ret = socket_send(_fd, &ssp);
     if (ret < 0) {
-      //if (errno == EINTR) {
-      //  ZLOG_WARN(__FILE__, __LINE__, __func__, "errno", errno);
-      //  continue;
-      //}
-
       ZLOG_ERROR(__FILE__, __LINE__, __func__, _ipi->_ip, _ipi->_port, errno, buf);
       break;
     }

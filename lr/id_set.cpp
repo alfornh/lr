@@ -1,21 +1,7 @@
 #include "id_set.h"
 
 #include "utils.h"
-//
-//int IDSet::init() {
-//  LOCK_GUARD_MUTEX_BEGIN(_mutex_ids)
-//  _ids.clear();
-//  _current_id = INCRE_STEP;
-//
-//  for (ID i = _min; i <= _current_id; ++i) {
-//    _ids.insert(i);
-//  }
-//
-//  LOCK_GUARD_MUTEX_END
-//
-//  return INCRE_STEP;
-//}
-//
+
 ID IDSet::get() {
   ID id;
   IDContainer::iterator beg;

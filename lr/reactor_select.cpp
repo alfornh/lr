@@ -57,7 +57,7 @@ void SelectReactor::listen_i_proc() {
   int maxfd;
   int fd;
   struct timeval tv;
-  fd_set _rfds;
+  fd_set rfds;
   MAP_FD_SOCKETID fd_sids;
 
   while ( !_stop_flag ) {
@@ -65,7 +65,7 @@ void SelectReactor::listen_i_proc() {
     tv.tv_sec = 1;
     tv.tv_usec = 0;
 
-    FD_ZERO(&_rfds);
+    FD_ZERO(&rfds);
 
     LOCK_GUARD_MUTEX_BEGIN(_mutex_select)
 
@@ -79,13 +79,13 @@ void SelectReactor::listen_i_proc() {
       if (fd > maxfd) {
         maxfd = fd;
       }
-      FD_SET(fd, &_rfds);
+      FD_SET(fd, &rfds);
 
       ++tit;
     }
 
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, "select");
-    ret = select(maxfd + 1, &_rfds, NULL, NULL, &tv);
+    ret = select(maxfd + 1, &rfds, NULL, NULL, &tv);
     if (_stop_flag) {
       return ;
     }
@@ -105,11 +105,11 @@ void SelectReactor::listen_i_proc() {
 
     if (_line->_main_socket) {//right end has no main_socket
       if (_protocol == Reactor::PROTOCOL_TCP
-        && (FD_ISSET(_line->_main_socket->_fd, &_rfds))) {
+        && (FD_ISSET(_line->_main_socket->_fd, &rfds))) {
 
         _line->l_accept(_line->_main_socket->_id);
 
-        FD_CLR(_line->_main_socket->_fd, &_rfds);
+        FD_CLR(_line->_main_socket->_fd, &rfds);
 
         ret--;
       }
@@ -120,7 +120,7 @@ void SelectReactor::listen_i_proc() {
     }
 
     for (const auto &e: fd_sids) {
-      if (FD_ISSET(e.first, &_rfds)) {
+      if (FD_ISSET(e.first, &rfds)) {
         ret = _line->l_recv(e.second);
         if (ret < 1) {
           _line->l_close(e.second);
@@ -139,6 +139,7 @@ void SelectReactor::listen_i_proc() {
 
 void SelectReactor::listen_o_proc() {
   SOCKETID id;
+  int ret;
   while (!_stop_flag) {
     {
       std::unique_lock<std::mutex> l(_mutex_o_sockets);
@@ -158,7 +159,12 @@ void SelectReactor::listen_o_proc() {
       _o_sockets.pop_front();
     }
 
-    _line->l_write(id);
+    ret = _line->l_write(id);
+
+    if (ret > 0) {
+      std::unique_lock<std::mutex> l(_mutex_o_sockets);
+      _o_sockets.emplace_back(id);
+    }
   }
 }
 
