@@ -110,7 +110,7 @@ int File::readline(char *buf, int len) {
   char *cr = ::fgets(buf, len, _file);
   if ( !cr ) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__);
-    return -1;
+    return 0;
   }
 
   return strlen(buf);

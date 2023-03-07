@@ -67,7 +67,10 @@ int Configure::init() {
   _file->cursor_head();
   while ( true ) {
     ret = _file->readline(bi->_buffer, BufferItem::buffer_item_capacity);
-    if (ret <= 0) {
+    if (ret < 0) {
+      return -1;
+    }
+    if (ret == 0) {
       break;
     }
     if (ret >= BufferItem::buffer_item_capacity) {
