@@ -1,6 +1,8 @@
 #ifndef _DIS_INC_H__
 #define _DIS_INC_H__
 
+#define FILE_PATH_SEPERATOR "/"
+
 extern "C" {
 
 bool zfexist(const char *path);

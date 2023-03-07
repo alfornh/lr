@@ -6,7 +6,7 @@ extern "C" {
 
 bool zfexist(const char *path) {
   int ret = _access(path, 00);
-  if (ret == ENOENT) {
+  if (ret != 0) {
     return false;
   }
   return true;

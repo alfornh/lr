@@ -11,7 +11,7 @@
 
 #include "plt/oth-inc.h"
 
-#define DEFAULT_LOG_PATH "logs/"
+#define DEFAULT_LOG_PATH "logs"
 #define DEFAULT_LOG_FILE_PREFIX "lr"
 #define DEFAULT_ROTATE_SIZE 4 * 1024 * 1024
 

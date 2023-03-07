@@ -75,8 +75,7 @@ bool ZLog::fexist(const std::string f) {
 
 int ZLog::rotate() {
   TIME_T now = time(0);
-
-  std::string lfile = _path + _prefix + "." + std::to_string(now) + ".txt";
+  std::string lfile = _path + FILE_PATH_SEPERATOR + _prefix + "." + std::to_string(now) + ".txt";
 
   _file = MAKE_SHARED(File, lfile);
   now = _file->open();
