@@ -297,7 +297,18 @@ int socket_listen(int socket, void *param) {
 }
 
 int _tcp_socket_recv(int socket, struct socket_recv_param *srp) {
-  return ::recv(socket, srp->buf, srp->blen, 0);
+  int ret;
+  while ( true ) {
+    ret = ::recv(socket, srp->buf, srp->blen, 0);
+    if ( ret < 0 ) {
+      if ( errno == EINTR ) {
+        continue;
+      }
+      return -1;
+    }
+    break;
+  }
+  return ret;
 }
 
 int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
@@ -306,7 +317,18 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(srp->ip);
   addrin.sin_port = htons(srp->port);
-  return ::recvfrom(socket, srp->buf, srp->blen, 0, (struct sockaddr*)&addrin, &addrlen);
+  int ret;
+  while ( true ) {
+    ret = ::recvfrom(socket, srp->buf, srp->blen, 0, (struct sockaddr*)&addrin, &addrlen);
+    if ( ret < 0 ) {
+      if ( errno == EINTR ) {
+        continue;
+      }
+      return -1;
+    }
+    break;
+  }
+  return ret;
 }
 
 int socket_recv(int socket, void *param) {
@@ -328,7 +350,18 @@ int socket_recv(int socket, void *param) {
 }
 
 int _tcp_socket_send(int socket, struct socket_send_param *ssp) {
-  return ::send(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL);
+  int ret;
+  while ( true ) {
+    ret = ::send(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL);
+    if ( ret < 0 ) {
+      if (errno == EINTR) {
+        continue;
+      }
+      return -1;
+    }
+    break;
+  }
+  return ret;
 }
 
 int _udp_socket_send(int socket, struct socket_send_param *ssp) {
@@ -336,7 +369,18 @@ int _udp_socket_send(int socket, struct socket_send_param *ssp) {
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(ssp->ip);
   addrin.sin_port = htons(ssp->port);
-  return ::sendto(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL, (struct sockaddr*)&addrin, sizeof(addrin));
+  int ret;
+  while ( true ) {
+    ret = ::sendto(socket, ssp->buf, ssp->blen, MSG_NOSIGNAL, (struct sockaddr*)&addrin, sizeof(addrin));
+    if ( ret < 0 ) {
+      if (errno == EINTR) {
+        continue;
+      }
+      return -1;
+    }
+    break;
+  }
+  return ret;
 }
 
 
