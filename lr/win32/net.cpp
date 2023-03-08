@@ -84,8 +84,12 @@ void AsyncIOMultiplex::listen_i_proc() {
     if (_stop_flag) {
       return ;
     }
-
-    _line->l_accept(_line->_main_socket->_id);
+    if (_line->_main_socket) {
+      _line->l_accept(_line->_main_socket->_id);
+    } else {
+      //right end has no main_socket, so it does not need accept procedure.
+      return ;
+    }
 
     LOCK_GUARD_MUTEX_END
   }
@@ -102,7 +106,7 @@ void AsyncIOMultiplex::listen_o_proc() {
     iostatus = GetQueuedCompletionStatus(_handler,  &numberOfBytesTransferred, (PULONG_PTR)&socketid, &lpoverlapped, INFINITE);
     if (!iostatus || !socketid ) {
       ZLOG_WARN(__FILE__, __LINE__, __func__, "GetQueuedCompletionStatus");
-      break;
+      continue;
     }
     if ( _stop_flag ) {
       ZLOG_WARN(__FILE__, __LINE__, __func__, "_stop_flag", _stop_flag);
