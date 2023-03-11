@@ -33,11 +33,15 @@ public:
   virtual void listen_o_proc();
 
 public:
-  std::mutex _mutex_select;
-
   typedef std::map<int, SOCKETID> MAP_FD_SOCKETID;
-  MAP_FD_SOCKETID _fd_sids;
   std::mutex _mutex_fd_sids;
+  MAP_FD_SOCKETID _fd_sids;
+  std::condition_variable _cv_fd_sids;
+
+private:
+  void wait_before_select(MAP_FD_SOCKETID &fds);
+  void signal_before_select(MAP_FD_SOCKETID &fds);
+
 };
 
 #endif //_REACTOR_SELECT_H__

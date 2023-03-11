@@ -12,6 +12,8 @@ int SelectReactor::_init(std::shared_ptr<IPInfo> ipi) {
   _ipi = ipi;
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
 
+  _stop_flag = false;
+
   _listen_i_proc_thread_group_id = PTHREADMANAGER->reserve_thread_group();
   if (_listen_i_proc_thread_group_id < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "reserve_thread_group");
@@ -26,13 +28,12 @@ int SelectReactor::_init(std::shared_ptr<IPInfo> ipi) {
   }
   PTHREADMANAGER->start(_listen_o_proc_thread_group_id, _ipi->_io_thread_num);
 
-  _stop_flag = false;
-
   return 0;
 }
 
 void SelectReactor::_stop() {
   _stop_flag = true;
+  _cv_fd_sids.notify_all();
   _cv_o_sockets.notify_all();
 }
 
@@ -52,88 +53,134 @@ int SelectReactor::_listen() {
   return 0;
 }
 
+void SelectReactor::wait_before_select(MAP_FD_SOCKETID &fds) {
+  while ( !_stop_flag ) {
+    std::unique_lock<std::mutex> l(_mutex_fd_sids);
+    _cv_fd_sids.wait(l, [this]{
+      return (_stop_flag || _fd_sids.size() > 0);
+    });
+
+    if (_stop_flag) {
+      return ;
+    }
+
+    if (_fd_sids.empty()) {
+      continue;
+    }
+
+    fds.swap(_fd_sids);
+
+    return;
+  }
+}
+
+void SelectReactor::signal_before_select(MAP_FD_SOCKETID &fds) {
+  LOCK_GUARD_MUTEX_BEGIN(_mutex_fd_sids)
+  for (const auto &e: fds) {
+    _fd_sids.insert(e);
+  }
+  LOCK_GUARD_MUTEX_END
+
+  _cv_fd_sids.notify_one();
+}
+
 void SelectReactor::listen_i_proc() {
   int ret;
   int maxfd;
   int fd;
+  int nfds;
   struct timeval tv;
-  fd_set rfds;
-  MAP_FD_SOCKETID fd_sids;
+  fd_set rfdset;
+
+  MAP_FD_SOCKETID ifds;
+  MAP_FD_SOCKETID afds;
 
   while ( !_stop_flag ) {
+
     maxfd = 0;
-    tv.tv_sec = 1;
+
+    tv.tv_sec = 10;
     tv.tv_usec = 0;
 
-    FD_ZERO(&rfds);
+    FD_ZERO(&rfdset);
 
-    LOCK_GUARD_MUTEX_BEGIN(_mutex_select)
+    ifds.clear();
+    wait_before_select(ifds);
 
-    LOCK_GUARD_MUTEX_BEGIN(_mutex_fd_sids)
-    fd_sids = _fd_sids;
-    LOCK_GUARD_MUTEX_END
-
-    MAP_FD_SOCKETID::reverse_iterator tit = fd_sids.rbegin();
-    while (tit != fd_sids.rend()) {
-      fd = tit->first;
+    for (const auto &e: ifds) {
+      fd = e.first;//tit->first;
       if (fd > maxfd) {
         maxfd = fd;
       }
-      FD_SET(fd, &rfds);
-
-      ++tit;
+      FD_SET(fd, &rfdset);
     }
 
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, "select");
-    ret = select(maxfd + 1, &rfds, NULL, NULL, &tv);
+    nfds = select(maxfd + 1, &rfdset, NULL, NULL, &tv);
     if (_stop_flag) {
       return ;
     }
-    ZLOG_DEBUG(__FILE__, __LINE__, __func__, "aft select", maxfd, ret, errno);
-    if (ret == 0) {
-        continue;
+    ZLOG_DEBUG(__FILE__, __LINE__, __func__, "aft select", maxfd, nfds, errno);
+
+    if (nfds == 0) {
+      signal_before_select(ifds);
+      continue;
     }
-    if (ret < 0) {
+    if (nfds < 0) {
       if (errno != EINTR) {
         ZLOG_ERROR(__FILE__, __LINE__, __func__, "select errno", errno);
         return ;
       }
 
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "select EINTR");
+
+      signal_before_select(ifds);
       continue;
     }
 
     if (_line->_main_socket) {//right end has no main_socket
-      if (_protocol == Reactor::PROTOCOL_TCP
-        && (FD_ISSET(_line->_main_socket->_fd, &rfds))) {
+      fd = _line->_main_socket->_fd;
+
+      if (_protocol == Reactor::PROTOCOL_TCP && FD_ISSET(fd, &rfdset)) {
 
         _line->l_accept(_line->_main_socket->_id);
 
-        FD_CLR(_line->_main_socket->_fd, &rfds);
+        FD_CLR(fd, &rfdset);
 
-        ret--;
+        --nfds;
       }
     }
 
-    if (ret < 1) {
+    if (nfds < 1) {
+      signal_before_select(ifds);
       continue;
     }
 
-    for (const auto &e: fd_sids) {
-      if (FD_ISSET(e.first, &rfds)) {
-        ret = _line->l_recv(e.second);
-        if (ret < 1) {
-          _line->l_close(e.second);
-        }
-        --ret;
-      }
-
-      if (ret < 0) {
-        break;
+    afds.clear();
+    MAP_FD_SOCKETID::iterator it = ifds.begin();
+    while (it != ifds.end()) {
+      if (FD_ISSET(it->first, &rfdset)) {
+        afds[it->first] = it->second;
+        it = ifds.erase(it);
+      } else {
+        ++it;
       }
     }
 
-    LOCK_GUARD_MUTEX_END
+    signal_before_select(ifds);
+
+    it = afds.begin();
+    while ( it != afds.end() ) {
+      ret = _line->l_recv(it->second);
+      if (ret < 1) {
+        _line->l_close(it->second);
+        it = afds.erase(it);
+      } else {
+        ++it;
+      }
+    }
+
+    signal_before_select(afds);
   }
 }
 
