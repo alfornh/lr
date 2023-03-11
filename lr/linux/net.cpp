@@ -312,12 +312,10 @@ int _tcp_socket_recv(int socket, struct socket_recv_param *srp) {
 }
 
 int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
+  int ret;
   struct sockaddr_in addrin;
   socklen_t addrlen = sizeof(addrin);
-  addrin.sin_family = AF_INET;
-  addrin.sin_addr.s_addr = inet_addr(srp->ip);
-  addrin.sin_port = htons(srp->port);
-  int ret;
+  memzero(&addrin, sizeof(addrin));
   while ( true ) {
     ret = ::recvfrom(socket, srp->buf, srp->blen, 0, (struct sockaddr*)&addrin, &addrlen);
     if ( ret < 0 ) {
@@ -328,6 +326,12 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
     }
     break;
   }
+
+  memzero(srp->ip, sizeof(srp->ip));
+  strcpy(srp->ip, inet_ntoa(addrin.sin_addr));
+  srp->port = ntohs(addrin.sin_port);
+  srp->blen = ret;
+
   return ret;
 }
 

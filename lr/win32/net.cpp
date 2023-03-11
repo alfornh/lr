@@ -334,9 +334,9 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
 
   struct sockaddr_in addrin;
   int addrlen = sizeof(addrin);
-  addrin.sin_family = AF_INET;
-  addrin.sin_addr.s_addr = inet_addr(srp->ip);
-  addrin.sin_port = htons(srp->port);
+  //addrin.sin_family = AF_INET;
+  //addrin.sin_addr.s_addr = inet_addr(srp->ip);
+  //addrin.sin_port = htons(srp->port);
   int ret;
   while ( true ) {
     if (srp->overlapped) {
@@ -356,6 +356,11 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
     }
     break;
   }
+
+  memzero(srp->ip, sizeof(srp->ip));
+  strcpy(srp->ip, inet_ntoa(addrin.sin_addr));
+  srp->port = ntohs(addrin.sin_port);
+  srp->blen = recvlen;
   return recvlen;
 }
 
