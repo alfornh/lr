@@ -74,6 +74,10 @@ void SelectReactor::wait_before_select(MAP_FD_SOCKETID &fds) {
   }
 }
 
+void SelectReactor::signal_before_select() {
+  _cv_fd_sids.notify_one();
+}
+
 void SelectReactor::signal_before_select(MAP_FD_SOCKETID &fds) {
   LOCK_GUARD_MUTEX_BEGIN(_mutex_fd_sids)
   for (const auto &e: fds) {
@@ -219,6 +223,9 @@ int SelectReactor::_add(SOCKETID sid, int fd) {
   LOCK_GUARD_MUTEX_BEGIN(_mutex_fd_sids)
   _fd_sids[fd] = sid;
   LOCK_GUARD_MUTEX_END
+
+  signal_before_select();
+
   return 0;
 }
 
@@ -233,6 +240,9 @@ int SelectReactor::_mod(SOCKETID sid, int fd) {
   LOCK_GUARD_MUTEX_BEGIN(_mutex_fd_sids)
   _fd_sids[fd] = sid;
   LOCK_GUARD_MUTEX_END
+
+  signal_before_select();
+
   return 0;
 }
 

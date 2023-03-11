@@ -41,6 +41,7 @@ public:
 private:
   void wait_before_select(MAP_FD_SOCKETID &fds);
   void signal_before_select(MAP_FD_SOCKETID &fds);
+  void signal_before_select();
 
 };
 
