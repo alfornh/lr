@@ -30,28 +30,12 @@ Socket::~Socket() {
   if (_fd > 0) {
     //close(_fd);
     socket_close(_fd);
-    _fd = 0;
   }
   PSIDSET->put(_id);
-  _id = INVALIDID;
 }
 
 SOCKETID Socket::sign_socket_id() {
   return PSIDSET->get();
-
-  //static std::shared_ptr<IDSet> _idset = MAKE_SHARED(IDSet);
-  //static std::mutex _g_mutex_g_id;
-  //static SOCKETID _g_socket_id = 0;
-  //SOCKETID id;
-
-  //LOCK_GUARD_MUTEX_BEGIN(_g_mutex_g_id);
-  //id = ++_g_socket_id;
-  //if (id == 0) {
-  //  id = ++_g_socket_id;
-  //}
-  //LOCK_GUARD_MUTEX_END
-  //
-  //return id;
 }
 
 int Socket::vinit(std::shared_ptr<IPInfo> ) { return 0; }

@@ -88,7 +88,6 @@ struct socket_connect_param {
 int socket_connect(int socket, void *param);
 
 struct socket_accept_param {
-  bool overlapped;
   char ip[64];
   unsigned int port;
   int socket;
@@ -102,7 +101,6 @@ int socket_listen(int socket, void *param);
 
 struct socket_recv_param {
   int protocol; 
-  bool overlapped; //true, false
   WSAOVERLAPPED *poverlapped;
   char *buf;
   unsigned int blen;
@@ -113,7 +111,6 @@ int socket_recv(int socket, void *param);
 
 struct socket_send_param {
   int protocol;
-  bool overlapped;
   WSAOVERLAPPED *poverlapped;
   char *buf;
   unsigned int blen;

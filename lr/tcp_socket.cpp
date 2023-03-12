@@ -21,12 +21,14 @@ int TcpSocket::vinit(std::shared_ptr<IPInfo> ipi) {
   _ipi = ipi;
   struct socket_create_param scp;
   scp.protocol = Reactor::PROTOCOL_TCP;
+  scp.overlapped = (_line->_reactor->_name == Reactor::REACTOR_ASYNC);
+
   _fd = socket_create(&scp);
   if (_fd < 0) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket error", _fd);
     return -1;
   }
-  
+
   _socket_status = SOCKET_STATUS_INIT;
   return 0;
 }
@@ -153,7 +155,6 @@ int TcpSocket::vsend(const char *buf, const int blen) {
   struct socket_send_param ssp;
   memzero(&ssp, sizeof(ssp));
   ssp.protocol = Reactor::PROTOCOL_TCP;
-
   LOCK_GUARD_MUTEX_BEGIN(_mutex_w_fd)
   while (sent < blen && (_socket_status == SOCKET_STATUS_ACTIVE || _socket_status == SOCKET_STATUS_WEBSOCKET_ACTIVE)) {
     ssp.buf = (char *)buf + sent;

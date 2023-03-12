@@ -63,6 +63,8 @@ public:
 
   int init();
 
+  int run_task(std::shared_ptr<Task> t);
+
   int run_task(int thread_group_id, std::shared_ptr<Task> t);
 
   void stop();

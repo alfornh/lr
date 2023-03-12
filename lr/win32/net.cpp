@@ -77,8 +77,13 @@ int AsyncIOMultiplex::_listen() {
 void AsyncIOMultiplex::listen_i_proc() {
   bool bret;
   int i;
-  while (!_stop_flag) {
-    ZLOG_DEBUG(__FILE__, __LINE__, __func__, "epoll wait");
+
+  if (_protocol != Reactor::PROTOCOL_TCP) {
+    return ;
+  }
+
+  while (!_stop_flag ) {
+    ZLOG_DEBUG(__FILE__, __LINE__, __func__);
 
     LOCK_GUARD_MUTEX_BEGIN(_mutex_handler)
     if (_stop_flag) {
@@ -99,7 +104,6 @@ void AsyncIOMultiplex::listen_o_proc() {
   DWORD   socketid;
   DWORD      numberOfBytesTransferred;
   LPWSAOVERLAPPED lpoverlapped = NULL;
-
   bool iostatus;
 
   while (!_stop_flag) {
@@ -113,7 +117,7 @@ void AsyncIOMultiplex::listen_o_proc() {
       return ;
     }
 
-    if ( numberOfBytesTransferred == 0 ) {
+    if (numberOfBytesTransferred == 0 ) {
       _line->l_close(socketid);
       LOCK_GUARD_MUTEX_BEGIN(_mutex_contexts)
         _contexts.erase(socketid);
@@ -209,21 +213,13 @@ int socket_create(void *param) {
 
   switch ( scp->protocol ) {
   case Reactor::PROTOCOL_TCP:
-    if (scp->overlapped) {
-      socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
-    } else {
-      socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    }
+    socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0 );
   break;
-  
+
   case Reactor::PROTOCOL_UDP:
-    if (scp->overlapped) {
-      socket = WSASocket(AF_INET, SOCK_DGRAM,  IPPROTO_UDP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0);
-    } else {
-      socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    }
+    socket = WSASocket(AF_INET, SOCK_DGRAM,  IPPROTO_UDP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0);
   break;
-  
+
   default:
     return -1;
   }
@@ -269,11 +265,7 @@ int socket_accept(int socket, void *param) {
   SOCKET s;
   struct socket_accept_param *sap = (struct socket_accept_param *)param;
   while ( true ) {
-    if (sap->overlapped) {
-      s = ::WSAAccept(socket, (struct sockaddr *)&addrin, &addrlen, NULL, NULL);
-    } else {
-      s = ::accept(socket, (struct sockaddr*)&addrin, &addrlen);
-    }
+    s = ::WSAAccept(socket, (struct sockaddr *)&addrin, &addrlen, NULL, NULL);
     if ( param ) {
       memzero(sap->ip, sizeof(sap->ip));
       strcpy(sap->ip, inet_ntoa(addrin.sin_addr));
@@ -310,12 +302,7 @@ int _tcp_socket_recv(int socket, struct socket_recv_param *srp) {
   wsabuf.len = srp->blen;
   int ret;
   while ( true ) {
-    if (srp->overlapped) {
-      ret = ::WSARecv(socket, &wsabuf, 1, &recvlen, &flags, srp->poverlapped, NULL);
-    } else {
-      ret = ::recv(socket, srp->buf, srp->blen, 0);
-      recvlen = ret;
-    }
+    ret = ::WSARecv(socket, &wsabuf, 1, &recvlen, &flags, srp->poverlapped, NULL);
     if ( ret == SOCKET_ERROR) {
       if ( WSA_IO_PENDING == WSAGetLastError()) {
         continue;
@@ -334,20 +321,14 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
 
   struct sockaddr_in addrin;
   int addrlen = sizeof(addrin);
-  //addrin.sin_family = AF_INET;
-  //addrin.sin_addr.s_addr = inet_addr(srp->ip);
-  //addrin.sin_port = htons(srp->port);
+  memzero(&addrin, sizeof(addrin));
   int ret;
   while ( true ) {
-    if (srp->overlapped) {
-      memzero(&wsabuf, sizeof(wsabuf));
-      wsabuf.buf = srp->buf;
-      wsabuf.len = srp->blen;
-      ret = ::WSARecvFrom(socket, &wsabuf, 1, &recvlen, &flags, (struct sockaddr *)&addrin, &addrlen, srp->poverlapped, NULL);
-    } else {
-      ret = ::recvfrom(socket, srp->buf, srp->blen, 0, (struct sockaddr*)&addrin, &addrlen);
-      recvlen = ret;
-    }
+    //if (srp->overlapped) {
+    memzero(&wsabuf, sizeof(wsabuf));
+    wsabuf.buf = srp->buf;
+    wsabuf.len = srp->blen;
+    ret = ::WSARecvFrom(socket, &wsabuf, 1, &recvlen, &flags, (struct sockaddr *)&addrin, &addrlen, srp->poverlapped, NULL);
     if ( ret == SOCKET_ERROR) {
       if ( WSA_IO_PENDING == WSAGetLastError() ) {
         continue;
@@ -386,15 +367,12 @@ int _tcp_socket_send(int socket, struct socket_send_param *ssp) {
   DWORD sent = 0;
   WSABUF wsabuf;
   int ret;
-  if (ssp->overlapped) {
-    memzero(&wsabuf, sizeof(wsabuf));
-    wsabuf.buf = ssp->buf;
-    wsabuf.len = ssp->blen;
-    ret = ::WSASend(socket, &wsabuf, 1, &sent, 0, ssp->poverlapped, NULL);
-  } else {
-    ret = ::send(socket, ssp->buf, ssp->blen, 0);
-    sent = ret;
-  }
+
+  memzero(&wsabuf, sizeof(wsabuf));
+  wsabuf.buf = ssp->buf;
+  wsabuf.len = ssp->blen;
+  ret = ::WSASend(socket, &wsabuf, 1, &sent, 0, ssp->poverlapped, NULL);
+
   if ( ret == SOCKET_ERROR && WSA_IO_PENDING != WSAGetLastError()) {
     return -1;
   }
@@ -412,12 +390,7 @@ int _udp_socket_send(int socket, struct socket_send_param *ssp) {
   wsabuf.len = ssp->blen;
   int ret;
   while ( true ) {
-    if (ssp->overlapped) {
-      ret = ::WSASendTo(socket, &wsabuf, 1, &sent, 0, (struct sockaddr *)&addrin, sizeof(addrin), ssp->poverlapped, NULL);
-    } else {
-      ret = ::sendto(socket, ssp->buf, ssp->blen, 0, (struct sockaddr*)&addrin, sizeof(addrin));
-      sent = ret;
-    }
+    ret = ::WSASendTo(socket, &wsabuf, 1, &sent, 0, (struct sockaddr *)&addrin, sizeof(addrin), ssp->poverlapped, NULL);
     if ( ret == SOCKET_ERROR) {
       if (WSA_IO_PENDING == WSAGetLastError()) {
         continue;

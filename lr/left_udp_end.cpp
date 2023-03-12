@@ -132,14 +132,17 @@ int LeftUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) {
     return -1;
   }
 
-  _main_socket->add_r_data(bi);
+  UdpSocket::ptr sock = STATIC_CAST(UdpSocket, _main_socket)->lrecv();
+  if (!sock) {
+      return -1;
+  }
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
-  _sockets.insert(std::make_pair(_main_socket->_id, STATIC_CAST(UdpSocket, _main_socket)));
+  _sockets.insert(std::make_pair(sock->_id, sock));
   LOCK_GUARD_MUTEX_END
 
   Event::ptr event = MAKE_SHARED(Event);
-  event->_es = _main_socket;
+  event->_es = sock;
   event->_stype = _stype | EVENT_SUBTYPE_READ;
 
   ADD_EVENT(_r_event_pool_id, event);

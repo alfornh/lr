@@ -110,12 +110,6 @@ void ThreadManager::stop() {
       _thread_groups[i]->stop();
     }
   }
-
-  //for (ThreadGroup::ptr &g: _thread_groups) {
-  //  if (g) {
-  //    g->stop();
-  //  }
-  //}
 }
 
 ThreadManager::~ThreadManager() {
@@ -129,6 +123,12 @@ ThreadManager::~ThreadManager() {
   //for (std::thread &t: _threads) {
   //  t.join();
   //}
+}
+
+int ThreadManager::run_task(std::shared_ptr<Task> t) {
+  std::shared_ptr<std::thread> th = std::make_shared<std::thread>([t] { (*t)();});
+  th->detach();
+  return 0;
 }
 
 int ThreadManager::run_task(int thread_group_id, std::shared_ptr<Task> t) {

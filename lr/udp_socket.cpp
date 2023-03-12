@@ -25,6 +25,7 @@ int UdpSocket::vinit(std::shared_ptr<IPInfo> ipi) {
   _ipi = ipi;
   memzero(&scp, sizeof(scp));
   scp.protocol = Reactor::PROTOCOL_UDP;
+  scp.overlapped = (_line->_reactor->_name == Reactor::REACTOR_ASYNC);
 
   _fd = socket_create(&scp);
   if (_fd < 0) {
@@ -146,7 +147,6 @@ std::shared_ptr<UdpSocket> UdpSocket::lrecv() {
   srp.protocol = Reactor::PROTOCOL_UDP;
   srp.buf = bi->_buffer;
   srp.blen = BufferItem::buffer_item_capacity;
-
   int ret;
   int recv = 0;
 
