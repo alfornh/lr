@@ -158,7 +158,7 @@ std::shared_ptr<UdpSocket> UdpSocket::lrecv() {
       break;
     }
 
-    ZLOG_DEBUG(__FILE__, __LINE__, __func__, ret, bi->_buffer);
+    ZLOG_DEBUG(__FILE__, __LINE__, __func__, srp.ip, srp.port, ret, bi->_buffer);
 
     bi->_len = ret;
     socket->add_r_data(bi);
@@ -227,7 +227,7 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
       break;
     }
 
-    ZLOG_DEBUG(__FILE__, __LINE__, __func__, "sendto", socket->_ipi->_ip, socket->_ipi->_port, buf);
+    ZLOG_DEBUG(__FILE__, __LINE__, __func__, "sendto", ssp.ip, ssp.port, ssp.buf);
 
     sent += ret;
 

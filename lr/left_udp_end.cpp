@@ -125,27 +125,31 @@ int LeftUdpEnd::l_recv(SOCKETID sid) {
   return 0;
 }
 
-int LeftUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) {
+int LeftUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void *opt = NULL) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
-  if (sid != _main_socket->_id) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__);
-    return -1;
-  }
 
-  UdpSocket::ptr sock = STATIC_CAST(UdpSocket, _main_socket)->lrecv();
-  if (!sock) {
-      return -1;
-  }
+  sockaddr_in* addrin = (sockaddr_in*)opt;
+
+  UdpSocket::ptr sock = MAKE_SHARED(UdpSocket, _stype);
+  sock->_id = Socket::sign_socket_id();
+  sock->_fd = 0;//dup(_fd);
+  sock->_line = shared_from_this();
+  sock->_ipi->_ip = std::string(inet_ntoa(addrin->sin_addr));
+  sock->_ipi->_port = ntohs(addrin->sin_port);
+  sock->_socket_status = SOCKET_STATUS_ACTIVE;
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
-  _sockets.insert(std::make_pair(sock->_id, sock));
+  _sockets[sock->_id] = sock;
   LOCK_GUARD_MUTEX_END
 
-  Event::ptr event = MAKE_SHARED(Event);
+  int ret = sock->add_r_data(bi);
+
+  Event::ptr event = std::make_shared<Event>();
   event->_es = sock;
   event->_stype = _stype | EVENT_SUBTYPE_READ;
 
   ADD_EVENT(_r_event_pool_id, event);
+
   return 0;
 }
 

@@ -15,6 +15,7 @@ MULTIPLEX_CONTEXT::MULTIPLEX_CONTEXT(SOCKETID id, int fd) {
   _fd = fd;
   _io_type = IO_TYPE_NULL;
   memzero(&_overlapped, sizeof(_overlapped));
+  memzero(&_addrin, sizeof(_addrin));
   _bi = MAKE_SHARED(BufferItem);
 }
 
@@ -138,7 +139,9 @@ void AsyncIOMultiplex::listen_o_proc() {
 
     ctx->_bi->_len = numberOfBytesTransferred;
 
-    _line->l_recv(socketid, ctx->_bi);
+    _line->l_recv(socketid, ctx->_bi, &(ctx->_addrin));
+
+    ZLOG_DEBUG(__FILE__, __LINE__, __func__, ctx->_bi->_buffer);
 
     _mod(ctx);
   }
@@ -173,12 +176,22 @@ int AsyncIOMultiplex::_mod(MULTIPLEX_CONTEXT::ptr mc) {
   DWORD flags = 0;
   DWORD recv = 0;
   WSABUF wsabuf;
+  int ret;
+  int addrlen;
+
   memzero(&wsabuf, sizeof(wsabuf));
   wsabuf.buf = mc->_bi->_buffer;
   wsabuf.len = BufferItem::buffer_item_capacity;
   memzero(wsabuf.buf, wsabuf.len);
 
-  int ret = WSARecv(mc->_fd, &wsabuf, 1, &recv, &flags, &mc->_overlapped, NULL);
+  addrlen = sizeof(mc->_addrin);
+
+  if (_protocol == Reactor::PROTOCOL_TCP) {
+    ret = WSARecv(mc->_fd, &wsabuf, 1, &recv, &flags, &mc->_overlapped, NULL);
+  } else {
+    ret = ::WSARecvFrom(mc->_fd, &wsabuf, 1, &recv, &flags, (struct sockaddr*)&mc->_addrin, &addrlen, &(mc->_overlapped), NULL);
+  }
+
   if (SOCKET_ERROR == ret) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "WSARecv", GetLastError());
     return -1;
@@ -324,7 +337,6 @@ int _udp_socket_recv(int socket, struct socket_recv_param *srp) {
   memzero(&addrin, sizeof(addrin));
   int ret;
   while ( true ) {
-    //if (srp->overlapped) {
     memzero(&wsabuf, sizeof(wsabuf));
     wsabuf.buf = srp->buf;
     wsabuf.len = srp->blen;
@@ -371,10 +383,17 @@ int _tcp_socket_send(int socket, struct socket_send_param *ssp) {
   memzero(&wsabuf, sizeof(wsabuf));
   wsabuf.buf = ssp->buf;
   wsabuf.len = ssp->blen;
-  ret = ::WSASend(socket, &wsabuf, 1, &sent, 0, ssp->poverlapped, NULL);
 
-  if ( ret == SOCKET_ERROR && WSA_IO_PENDING != WSAGetLastError()) {
-    return -1;
+  while ( true ) {
+    ret = ::WSASend(socket, &wsabuf, 1, &sent, 0, ssp->poverlapped, NULL);
+    if ( ret == SOCKET_ERROR ) {
+      if (WSA_IO_PENDING == WSAGetLastError()) {
+        continue;
+      }
+      return -1;
+    }
+
+    break;
   }
   return sent;
 }
@@ -382,13 +401,17 @@ int _tcp_socket_send(int socket, struct socket_send_param *ssp) {
 int _udp_socket_send(int socket, struct socket_send_param *ssp) {
   DWORD sent;
   struct sockaddr_in addrin;
+  WSABUF wsabuf;
+  int ret;
+
+  memzero(&addrin, sizeof(addrin));
   addrin.sin_family = AF_INET;
   addrin.sin_addr.s_addr = inet_addr(ssp->ip);
-  addrin.sin_port = hton16(ssp->port);
-  WSABUF wsabuf;
+  addrin.sin_port = htons(ssp->port);
+
   wsabuf.buf = ssp->buf;
   wsabuf.len = ssp->blen;
-  int ret;
+
   while ( true ) {
     ret = ::WSASendTo(socket, &wsabuf, 1, &sent, 0, (struct sockaddr *)&addrin, sizeof(addrin), ssp->poverlapped, NULL);
     if ( ret == SOCKET_ERROR) {

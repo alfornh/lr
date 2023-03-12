@@ -29,6 +29,7 @@ public:
   SOCKETID _id;
   int      _fd;
   int      _io_type;
+  sockaddr_in _addrin;
   WSAOVERLAPPED  _overlapped;
   std::shared_ptr<BufferItem> _bi;
 };

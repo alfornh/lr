@@ -26,7 +26,7 @@ public:
 
   //virtual int l_accept(SOCKETID sid);
   virtual int l_recv(SOCKETID sid);
-  virtual int l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi);
+  virtual int l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void *opt);
   virtual int l_write(SOCKETID sid);
   virtual int l_close(SOCKETID sid);
 

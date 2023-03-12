@@ -188,7 +188,7 @@ int LeftTcpEnd::l_recv(SOCKETID sid) {
   return ret;
 }
 
-int LeftTcpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) {
+int LeftTcpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void *opt = NULL) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
   Socket::ptr sock = Socket::ptr();
 

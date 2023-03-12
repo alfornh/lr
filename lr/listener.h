@@ -28,7 +28,7 @@ public:
   virtual int notify_w_event(SOCKETID id, int fd) { return 0; }
   virtual int l_accept(SOCKETID sid) { return 0; }
   virtual int l_recv(SOCKETID sid) { return 0; }
-  virtual int l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) { return 0; }
+  virtual int l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void *opt = NULL) { return 0; }
   //l_write return the nunmber of remain bytes.
   virtual int l_write(SOCKETID sid) { return 0; }
   virtual int l_close(SOCKETID sid) { return 0; }
