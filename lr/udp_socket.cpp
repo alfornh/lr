@@ -216,7 +216,12 @@ int UdpSocket::lsend(const std::shared_ptr<Socket> socket) {
   do {
     ssp.buf = buf + sent;
     ssp.blen = blen - sent;
-    ret = socket_send(_line->_main_socket->_fd, &ssp);
+    if (_line->_main_socket) {
+      ret = socket_send(_line->_main_socket->_fd, &ssp);
+    } else {
+      ret = socket_send(socket->_fd, &ssp);
+    }
+
     if (ret < 0) {
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_send");
       break;
