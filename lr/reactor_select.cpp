@@ -120,7 +120,7 @@ void SelectReactor::listen_i_proc() {
     }
 
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, "select");
-    nfds = select(maxfd + 1, &rfdset, NULL, NULL, &tv);
+    nfds = select(maxfd + 1, &rfdset, NULL, NULL, NULL);
     if (_stop_flag) {
       return ;
     }
@@ -176,7 +176,7 @@ void SelectReactor::listen_i_proc() {
     it = afds.begin();
     while ( it != afds.end() ) {
       ret = _line->l_recv(it->second);
-      if (ret < 1) {
+      if (ret < 0) {
         _line->l_close(it->second);
         it = afds.erase(it);
       } else {
@@ -190,7 +190,8 @@ void SelectReactor::listen_i_proc() {
 
 void SelectReactor::listen_o_proc() {
   SOCKETID id;
-  int ret;
+  int ret = 0;
+  fd_set wfd;
   while (!_stop_flag) {
     {
       std::unique_lock<std::mutex> l(_mutex_o_sockets);

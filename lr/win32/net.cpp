@@ -218,7 +218,7 @@ int socket_create(void *param) {
     init_network();
     init_network_flag = true;
   }
-  SOCKET socket;
+  SOCKET sock;
   struct socket_create_param *scp = (struct socket_create_param *)param;
   if ( !scp ) {
     return -1;
@@ -226,17 +226,25 @@ int socket_create(void *param) {
 
   switch ( scp->protocol ) {
   case Reactor::PROTOCOL_TCP:
-    socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0 );
+    if (scp->overlapped) {
+      sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0 );
+    } else {
+      sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    }
   break;
 
   case Reactor::PROTOCOL_UDP:
-    socket = WSASocket(AF_INET, SOCK_DGRAM,  IPPROTO_UDP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0);
+    if (scp->overlapped) {
+      sock = WSASocket(AF_INET, SOCK_DGRAM,  IPPROTO_UDP, NULL, 0, (scp->overlapped) ? WSA_FLAG_OVERLAPPED: 0);
+    } else {
+      sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    }
   break;
 
   default:
     return -1;
   }
-  return socket;
+  return sock;
 }
 
 int socket_bind(int socket, void *param) {
