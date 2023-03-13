@@ -93,22 +93,28 @@ int RightUdpEnd::l_recv(SOCKETID sid) {
   return ret;
 }
 
-int RightUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi) {
+int RightUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void* opt = NULL) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
-  int ret;
 
-  UdpSocket::ptr sock;
+  if (!opt) {
+      ZLOG_ERROR(__FILE__, __LINE__, __func__, "null opt");
+      return -1;
+  }
+  sockaddr_in* addrin = (sockaddr_in*)opt;
+
+  UdpSocket::ptr sock = MAKE_SHARED(UdpSocket, _stype);
+  sock->_id = Socket::sign_socket_id();
+  sock->_fd = 0;//dup(_fd);
+  sock->_line = shared_from_this();
+  sock->_ipi->_ip = std::string(inet_ntoa(addrin->sin_addr));
+  sock->_ipi->_port = ntohs(addrin->sin_port);
+  sock->_socket_status = SOCKET_STATUS_ACTIVE;
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
-  SocketContainer::iterator it = _sockets.find(sid);
-  if ( it == _sockets.end()) {
-    ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket not found", sid);
-    return -1;
-  }
-  sock = it->second;
+  _sockets[sock->_id] = sock;
   LOCK_GUARD_MUTEX_END
 
-  ret = sock->add_r_data(bi);
+  int ret = sock->add_r_data(bi);
 
   Event::ptr event = MAKE_SHARED(Event);
   event->_es = sock;
@@ -176,6 +182,7 @@ std::shared_ptr<UdpSocket> RightUdpEnd::make_right() {
 
   c = MAKE_SHARED(UdpSocket, EVENT_TYPE_SOCKET_UDP);
   c->_id = Socket::sign_socket_id();
+  c->_line = shared_from_this();
   if (c->_id < 1) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "no socket id available");
     return c;
@@ -185,8 +192,6 @@ std::shared_ptr<UdpSocket> RightUdpEnd::make_right() {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket init");
     return UdpSocket::ptr();
   }
- 
-  c->_line = shared_from_this();
 
   ret = c->nonblock(false);
   if (ret < 0) {

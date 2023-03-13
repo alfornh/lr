@@ -105,7 +105,7 @@ int RightTcpEnd::l_recv(SOCKETID sid) {
   return ret;
 }
 
-int RightTcpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi){
+int RightTcpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void* opt = NULL) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
   Socket::ptr socket = Socket::ptr();
 
@@ -197,6 +197,7 @@ std::shared_ptr<Socket> RightTcpEnd::make_right() {
   int ret;
 
   c = MAKE_SHARED(TcpSocket, EVENT_TYPE_SOCKET_TCP);
+  c->_line = shared_from_this();
   c->_id = Socket::sign_socket_id();
   if (c->_id < 1) {
     ZLOG_ERROR(__FILE__, __LINE__, __func__, "no socket available");
@@ -220,8 +221,6 @@ std::shared_ptr<Socket> RightTcpEnd::make_right() {
     return Socket::ptr();
   }
  
-  c->_line = shared_from_this();
-
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
 
   SocketContainer::iterator it = _sockets.find(c->_id);

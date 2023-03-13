@@ -123,7 +123,7 @@ int TcpSocket::vrecv() {
     ret = socket_recv(_fd, &srp);
     if ( ret < 0 ) {
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_recv errno", errno);
-      break;
+      return -1;
     }
 
     if (ret == 0) {

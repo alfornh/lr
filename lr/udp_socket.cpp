@@ -113,7 +113,7 @@ int UdpSocket::vrecv() {
     ret = socket_recv(_fd, &srp);
     if (ret < 0) {
       ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket_recv");
-      break;
+      return -1;
     }
 
     ZLOG_DEBUG(__FILE__, __LINE__, __func__, bi->_len, bi->_buffer);

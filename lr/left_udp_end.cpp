@@ -128,6 +128,10 @@ int LeftUdpEnd::l_recv(SOCKETID sid) {
 int LeftUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void *opt = NULL) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
 
+  if (!opt) {
+    ZLOG_ERROR(__FILE__, __LINE__, __func__, "null opt");
+    return -1;
+  }
   sockaddr_in* addrin = (sockaddr_in*)opt;
 
   UdpSocket::ptr sock = MAKE_SHARED(UdpSocket, _stype);
