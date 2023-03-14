@@ -103,7 +103,7 @@ void SelectReactor::listen_i_proc() {
 
     maxfd = 0;
 
-    tv.tv_sec = 10;
+    tv.tv_sec = 30;
     tv.tv_usec = 0;
 
     FD_ZERO(&rfdset);
@@ -144,7 +144,6 @@ void SelectReactor::listen_i_proc() {
 
     if (_line->_main_socket) {//right end has no main_socket
       fd = _line->_main_socket->_fd;
-
       if (_protocol == Reactor::PROTOCOL_TCP && FD_ISSET(fd, &rfdset)) {
 
         _line->l_accept(_line->_main_socket->_id);

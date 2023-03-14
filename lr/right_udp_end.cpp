@@ -96,25 +96,23 @@ int RightUdpEnd::l_recv(SOCKETID sid) {
 int RightUdpEnd::l_recv(SOCKETID sid, std::shared_ptr<BufferItem> bi, void* opt = NULL) {
   ZLOG_DEBUG(__FILE__, __LINE__, __func__);
 
-  if (!opt) {
-      ZLOG_ERROR(__FILE__, __LINE__, __func__, "null opt");
-      return -1;
-  }
-  sockaddr_in* addrin = (sockaddr_in*)opt;
-
-  UdpSocket::ptr sock = MAKE_SHARED(UdpSocket, _stype);
-  sock->_id = Socket::sign_socket_id();
-  sock->_fd = 0;//dup(_fd);
-  sock->_line = shared_from_this();
-  sock->_ipi->_ip = std::string(inet_ntoa(addrin->sin_addr));
-  sock->_ipi->_port = ntohs(addrin->sin_port);
-  sock->_socket_status = SOCKET_STATUS_ACTIVE;
+  UdpSocket::ptr sock;
 
   LOCK_GUARD_MUTEX_BEGIN(_mutex_sockets)
-  _sockets[sock->_id] = sock;
+  SocketContainer::iterator it = _sockets.find(sid);
+  if (it == _sockets.end()) {
+      ZLOG_ERROR(__FILE__, __LINE__, __func__, "socket not found", sid);
+      return -1;
+  }
+  sock = it->second;
   LOCK_GUARD_MUTEX_END
 
   int ret = sock->add_r_data(bi);
+  if (opt) {
+    sockaddr_in* addrin = (sockaddr_in*)opt;
+    sock->_ipi->_ip = std::string(inet_ntoa(addrin->sin_addr));
+    sock->_ipi->_port = ntohs(addrin->sin_port);
+  }
 
   Event::ptr event = MAKE_SHARED(Event);
   event->_es = sock;
