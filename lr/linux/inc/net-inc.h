@@ -1,6 +1,11 @@
 #ifndef _NET_INC_H__
 #define _NET_INC_H__
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/epoll.h>
+
 #include "reactor.h"
 
 class AsyncIOMultiplex : public Reactor {
@@ -35,6 +40,7 @@ extern "C" {
 
 struct socket_create_param {
   int protocol;
+  bool overlapped;
 };
 int socket_create(void *param);
 

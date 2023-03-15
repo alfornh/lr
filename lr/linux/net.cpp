@@ -1,9 +1,5 @@
-#include <arpa/inet.h>
 #include <fcntl.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <stdlib.h>
-#include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <sys/types.h>
 #include <time.h>
